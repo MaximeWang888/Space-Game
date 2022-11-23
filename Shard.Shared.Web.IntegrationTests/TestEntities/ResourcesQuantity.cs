@@ -12,6 +12,12 @@ public record ResourcesQuantity(JObjectAsserter Json)
     {
     }
 
+    public int? this[string resourceName]
+    {
+        get => Json[resourceName].AssertNullableInteger();
+        set => Json.SetPropertyValue(resourceName, value);
+    }
+
     public int? Aluminium
     {
         get => Json["aluminium"].AssertNullableInteger();

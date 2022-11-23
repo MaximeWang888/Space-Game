@@ -29,6 +29,12 @@ public static class Extensions
             "application/json"));
     }
 
+    public static async Task<Unit> PutAsync(this HttpClient client, Unit unit)
+    {
+        using var response = await client.PutTestEntityAsync(unit.Url, unit);
+        return new Unit(unit.UserPath, await response.AssertSuccessJsonAsync());
+    }
+
     public static async Task AssertSuccessStatusCode(this HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
