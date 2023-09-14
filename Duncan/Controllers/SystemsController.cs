@@ -15,6 +15,7 @@ namespace Duncan.Controllers
             mapOptions.Seed = "MohaMax";
             MapGenerator map = new MapGenerator(mapOptions);
             SectorSpecification systems = map.Generate();
+
             return systems.Systems;
         }
 
@@ -23,11 +24,9 @@ namespace Duncan.Controllers
 
         public SystemSpecification GetOneSystem(string systemName)
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions();
-            mapOptions.Seed = "MohaMax";
-            MapGenerator map = new MapGenerator(mapOptions);
-            SectorSpecification systems = map.Generate();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Systems.Where(system => system.Name == systemName).ToList();
+            IReadOnlyList<SystemSpecification> systems = GetSystems();
+            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToList();
+
             return filteredSystem[0];
         }
 
@@ -36,11 +35,8 @@ namespace Duncan.Controllers
 
         public IReadOnlyList<PlanetSpecification> GetPlanetsOfOneSystem(string systemName)
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions();
-            mapOptions.Seed = "MohaMax";
-            MapGenerator map = new MapGenerator(mapOptions);
-            SectorSpecification systems = map.Generate();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Systems.Where(system => system.Name == systemName).ToList();
+            IReadOnlyList<SystemSpecification> systems = GetSystems();
+            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToArray();
 
             return filteredSystem[0].Planets;
         }
@@ -50,13 +46,12 @@ namespace Duncan.Controllers
 
         public PlanetSpecification GetOnePlanet(string systemName,string planetName)
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions();
-            mapOptions.Seed = "MohaMax";
-            MapGenerator map = new MapGenerator(mapOptions);
-            SectorSpecification systems = map.Generate();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Systems.Where(system => system.Name == systemName).ToList();
-            PlanetSpecification respone = filteredSystem[0].Planets.Where(planet => planet.Name == planetName).ToArray()[0];
-            return respone;
+            IReadOnlyList<SystemSpecification> systems = GetSystems();
+            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToList();
+            IReadOnlyList<PlanetSpecification> planets = GetPlanetsOfOneSystem(systemName);
+            PlanetSpecification response = planets.Where(planet => planet.Name == planetName).First();
+
+            return response;
         }
     }
 }
