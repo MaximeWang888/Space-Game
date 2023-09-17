@@ -6,32 +6,28 @@ namespace Duncan.Controllers
 {
     public class SystemsController : ControllerBase
     {
-        [SwaggerOperation(Summary = "Get all systems with their planets")]
+        [SwaggerOperation(Summary = "Get all systems")]
         [HttpGet("/systems")]
         public IReadOnlyList<SystemSpecification> GetSystems()
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions();
-            mapOptions.Seed = "MohaMax";
-            MapGenerator map = new MapGenerator(mapOptions);
-            SectorSpecification systems = map.Generate();
+            MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "MohaMax" }; 
+            MapGenerator mapGenerator = new MapGenerator(mapOptions);
 
-            return systems.Systems;
+            return mapGenerator.Generate().Systems;
         }
 
-        [SwaggerOperation(Summary = "Get a single system, and all its planet")]
+        [SwaggerOperation(Summary = "Get a specific system by its name")]
         [HttpGet("/systems/{systemName}")]
-
         public SystemSpecification GetOneSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetSystems();
-            SystemSpecification filteredSystem = systems.Where(system => system.Name == systemName).First();
-
-            return filteredSystem;
+            IEnumerable<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName);
+            
+            return filteredSystem.First();
         }
 
         [SwaggerOperation(Summary = "Get all planets of a single system")]
         [HttpGet("/systems/{systemName}/planets")]
-
         public IReadOnlyList<PlanetSpecification> GetPlanetsOfOneSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetSystems();
