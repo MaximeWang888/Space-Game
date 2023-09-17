@@ -26,14 +26,13 @@ namespace Duncan.Controllers
             return filteredSystem.First();
         }
 
-        [SwaggerOperation(Summary = "Get all planets of a single system")]
+        [SwaggerOperation(Summary = "Get all planets of a specific system")]
         [HttpGet("/systems/{systemName}/planets")]
         public IReadOnlyList<PlanetSpecification> GetPlanetsOfOneSystem(string systemName)
         {
-            IReadOnlyList<SystemSpecification> systems = GetSystems();
-            SystemSpecification filteredSystem = systems.Where(system => system.Name == systemName).First();
+            SystemSpecification systemSelected = GetOneSystem(systemName);
 
-            return filteredSystem.Planets;
+            return systemSelected.Planets;
         }
 
         [SwaggerOperation(Summary = "Get a single planet of a system")]
@@ -41,12 +40,10 @@ namespace Duncan.Controllers
 
         public PlanetSpecification GetOnePlanet(string systemName,string planetName)
         {
-            IReadOnlyList<SystemSpecification> systems = GetSystems();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToList();
-            IReadOnlyList<PlanetSpecification> planets = GetPlanetsOfOneSystem(systemName);
-            PlanetSpecification response = planets.Where(planet => planet.Name == planetName).First();
+            IReadOnlyList<PlanetSpecification> planetsSelected = GetPlanetsOfOneSystem(systemName);
+            IEnumerable<PlanetSpecification> filteredPlanets = planetsSelected.Where(planet => planet.Name == planetName);
 
-            return response;
+            return filteredPlanets.First();
         }
     }
 }
