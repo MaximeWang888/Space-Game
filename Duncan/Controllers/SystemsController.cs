@@ -1,4 +1,3 @@
-using System;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
@@ -25,9 +24,9 @@ namespace Duncan.Controllers
         public SystemSpecification GetOneSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetSystems();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToList();
+            SystemSpecification filteredSystem = systems.Where(system => system.Name == systemName).First();
 
-            return filteredSystem[0];
+            return filteredSystem;
         }
 
         [SwaggerOperation(Summary = "Get all planets of a single system")]
@@ -36,9 +35,9 @@ namespace Duncan.Controllers
         public IReadOnlyList<PlanetSpecification> GetPlanetsOfOneSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetSystems();
-            IReadOnlyList<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName).ToArray();
+            SystemSpecification filteredSystem = systems.Where(system => system.Name == systemName).First();
 
-            return filteredSystem[0].Planets;
+            return filteredSystem.Planets;
         }
 
         [SwaggerOperation(Summary = "Get a single planet of a system")]
