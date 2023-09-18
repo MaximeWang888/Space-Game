@@ -21,5 +21,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shard.Shared.Core\Shard.Shared.Core.csproj" />
+  </ItemGroup>
   
 </Project>
