@@ -8,7 +8,7 @@ namespace Duncan.Controllers
     {
         [SwaggerOperation(Summary = "Get all systems")]
         [HttpGet("/systems")]
-        public IReadOnlyList<SystemSpecification> GetSystems()
+        public IReadOnlyList<SystemSpecification> GetAllSystems()
         {
             MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "MohaMax" }; 
             MapGenerator mapGenerator = new MapGenerator(mapOptions);
@@ -18,9 +18,9 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Get a specific system by its name")]
         [HttpGet("/systems/{systemName}")]
-        public SystemSpecification GetOneSystem(string systemName)
+        public SystemSpecification GetSystem(string systemName)
         {
-            IReadOnlyList<SystemSpecification> systems = GetSystems();
+            IReadOnlyList<SystemSpecification> systems = GetAllSystems();
             IEnumerable<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName);
             
             return filteredSystem.First();
@@ -28,19 +28,19 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Get all planets of a specific system")]
         [HttpGet("/systems/{systemName}/planets")]
-        public IReadOnlyList<PlanetSpecification> GetPlanetsOfOneSystem(string systemName)
+        public IReadOnlyList<PlanetSpecification> GetAllPlanetsOfSystem(string systemName)
         {
-            SystemSpecification systemSelected = GetOneSystem(systemName);
+            SystemSpecification systemSelected = GetSystem(systemName);
 
             return systemSelected.Planets;
         }
 
-        [SwaggerOperation(Summary = "Get a single planet of a system")]
+        [SwaggerOperation(Summary = "Get a specific planet of a system")]
         [HttpGet("/systems/{systemName}/planets/{planetName}")]
 
-        public PlanetSpecification GetOnePlanet(string systemName,string planetName)
+        public PlanetSpecification GetPlanet(string systemName,string planetName)
         {
-            IReadOnlyList<PlanetSpecification> planetsSelected = GetPlanetsOfOneSystem(systemName);
+            IReadOnlyList<PlanetSpecification> planetsSelected = GetAllPlanetsOfSystem(systemName);
             IEnumerable<PlanetSpecification> filteredPlanets = planetsSelected.Where(planet => planet.Name == planetName);
 
             return filteredPlanets.First();
