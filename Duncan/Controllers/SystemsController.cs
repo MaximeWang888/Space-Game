@@ -1,3 +1,4 @@
+using Duncan.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
@@ -6,14 +7,19 @@ namespace Duncan.Controllers
 {
     public class SystemsController : ControllerBase
     {
+
+        private readonly IMapGenerator map;
+
+        public SystemsController(IMapGenerator mapGenerator)
+        {
+            this.map = mapGenerator;
+        }
+
         [SwaggerOperation(Summary = "Get all systems")]
         [HttpGet("/systems")]
         public IReadOnlyList<SystemSpecification> GetAllSystems()
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "MohaMax" }; 
-            MapGenerator mapGenerator = new MapGenerator(mapOptions);
-
-            return mapGenerator.Generate().Systems;
+            return map.getGenerator().Systems;
         }
 
         [SwaggerOperation(Summary = "Get a specific system by its name")]
