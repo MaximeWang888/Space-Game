@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Hosting; 
 using Microsoft.AspNetCore.Mvc.Testing; 
 using Microsoft.Extensions.Configuration; 
-using Microsoft.Extensions.Logging; 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit.Abstractions;
 
 namespace Shard.Shared.Web.IntegrationTests; 
