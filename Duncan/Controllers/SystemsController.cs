@@ -5,6 +5,8 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
 {
+    [ApiController]
+    [Route("[controller]")]
     public class SystemsController : ControllerBase
     {
 
@@ -16,14 +18,14 @@ namespace Duncan.Controllers
         }
 
         [SwaggerOperation(Summary = "Get all systems")]
-        [HttpGet("/systems")]
+        [HttpGet("")]
         public IReadOnlyList<SystemSpecification> GetAllSystems()
         {
             return map.getGenerator().Systems;
         }
 
         [SwaggerOperation(Summary = "Get a specific system by its name")]
-        [HttpGet("/systems/{systemName}")]
+        [HttpGet("{systemName}")]
         public SystemSpecification GetSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetAllSystems();
@@ -33,7 +35,7 @@ namespace Duncan.Controllers
         }
 
         [SwaggerOperation(Summary = "Get all planets of a specific system")]
-        [HttpGet("/systems/{systemName}/planets")]
+        [HttpGet("{systemName}/planets")]
         public IReadOnlyList<PlanetSpecification> GetAllPlanetsOfSystem(string systemName)
         {
             SystemSpecification systemSelected = GetSystem(systemName);
@@ -42,7 +44,7 @@ namespace Duncan.Controllers
         }
 
         [SwaggerOperation(Summary = "Get a specific planet of a system")]
-        [HttpGet("/systems/{systemName}/planets/{planetName}")]
+        [HttpGet("{systemName}/planets/{planetName}")]
 
         public PlanetSpecification GetPlanet(string systemName,string planetName)
         {

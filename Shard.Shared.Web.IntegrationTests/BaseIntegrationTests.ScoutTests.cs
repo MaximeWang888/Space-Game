@@ -86,7 +86,7 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         var unit = await GetScout(userPath);
 
         using var client = factory.CreateClient();
-        using var response = await client.GetAsync($"{userPath}/units/{unit.Id}z");
+        using var response = await client.GetAsync($"{userPath}/units/{unit.Id}");
         await response.AssertStatusEquals(HttpStatusCode.NotFound);
     }
 

@@ -1,5 +1,6 @@
 using Duncan;
 using Duncan.Interfaces;
+using Duncan.Model;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddSingleton<IMapGenerator, MapGeneratorWrapper>();
+builder.Services.AddSingleton<List<User>>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
