@@ -7,6 +7,6 @@ namespace Duncan.Model
     {
         public string? Id { get; set; }
         public string? Pseudo { get; set; }
-        public Unit? unit { get; set; }
+        // public List<Unit>? Units { get; set; }
     }
 }

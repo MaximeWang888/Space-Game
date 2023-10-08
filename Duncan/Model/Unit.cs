@@ -6,15 +6,12 @@ namespace Duncan.Model
     {
         public string? Type { get; set; }
         public string? Id { get; set; }
-        public string? planet { get; set; }
-        public string? system { get; set; }
+        public string? Planet { get; set; }
+        public string? System { get; set; }
 
-        public Unit(string id)
+        public Unit()
         {
-            this.Id = id;
+            this.Id = Guid.NewGuid().ToString();
         }
-
     }
-
-    
 }
