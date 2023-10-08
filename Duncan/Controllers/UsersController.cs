@@ -1,5 +1,6 @@
 using Duncan.Model;
 using Microsoft.AspNetCore.Mvc;
+using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
@@ -10,10 +11,12 @@ namespace Duncan.Controllers
     {
 
         private readonly UserDB? userDB;
+        private readonly MapGeneratorWrapper map;
 
-        public UsersController(UserDB userDB)
+        public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator)
         {
             this.userDB = userDB;
+            this.map = mapGenerator;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
@@ -30,8 +33,8 @@ namespace Duncan.Controllers
                 return BadRequest("Inconsistent user ID");
 
             Unit unit = new Unit();
-            unit.Planet = "Planet";
-            unit.System = "System";
+            unit.Planet = map.Map.Systems.First().Planets.First().Name;
+            unit.System = map.Map.Systems.First().Name;
             unit.Type = "scout";
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
@@ -59,9 +62,5 @@ namespace Duncan.Controllers
             return userF;
         }
 
-        public List<UserWithUnits> GetAllUsers()
-        {
-            return userDB.users;
-        }
     }
 }

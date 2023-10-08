@@ -1,12 +1,11 @@
 using Duncan;
-using Duncan.Interfaces;
 using Duncan.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSingleton<IMapGenerator, MapGeneratorWrapper>();
+builder.Services.AddSingleton<MapGeneratorWrapper>();
 builder.Services.AddSingleton<List<User>>();
 builder.Services.AddSingleton<List<UserWithUnits>>();
 builder.Services.AddSingleton<UserDB>();

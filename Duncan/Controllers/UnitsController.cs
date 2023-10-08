@@ -1,5 +1,7 @@
 ﻿using Duncan.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Extensions;
+using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
@@ -7,10 +9,12 @@ namespace Duncan.Controllers
     public class UnitsController : ControllerBase
     {
         private readonly UserDB? userDB;
+        private readonly MapGeneratorWrapper map;
 
-        public UnitsController(UserDB userDB)
+        public UnitsController(UserDB userDB, MapGeneratorWrapper mapGenerator)
         {
             this.userDB = userDB;
+            this.map = mapGenerator;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
@@ -22,29 +26,57 @@ namespace Duncan.Controllers
             return user.Units;
         }
 
-        [SwaggerOperation(Summary = "Put a specific user")]
-        [HttpPut("users/{userId}/units/{unitId}")]
-        public ActionResult<List<Unit>> PutUnitById(string userId, string unitId, [FromBody] Unit unit)
+        [SwaggerOperation(Summary = "Move Unit By Id")]
+        [HttpPut("users/{userId}/Units/{unitId}")]
+        public ActionResult<Unit> MoveUnitById(string userId, string unitId, [FromBody] Unit unit)
         {
-            if (unit == null)
-                return BadRequest("Request body is required");
-
-            if (unit.Id.Length < 2)
-                return BadRequest("Invalid user ID");
-
-            if (unit.Id != userId)
-                return BadRequest("Inconsistent unit ID");
-
             UserWithUnits userWithUnits = userDB.users.FirstOrDefault(u => u.Id == userId);
 
-            return userWithUnits.Units;
+            Unit unitFound = userWithUnits.Units.FirstOrDefault(u => u.Id == unitId);
+            unitFound.Planet = unit.Planet;
+            unitFound.System = unit.System;
+
+            return userWithUnits.Units.First();
+        }
+
+        [SwaggerOperation(Summary = "Return information about one single unit of a user")]
+        [HttpGet("users/{userId}/Units/{unitId}")]
+        public ActionResult<Unit> GetUnitInformation(string userId, string unitId)
+        {
+            UserWithUnits userWithUnits = userDB.users.FirstOrDefault(u => u.Id == userId);
+
+            if (userWithUnits == null)
+                return NotFound();
+
+            Unit unitFound = userWithUnits.Units.FirstOrDefault(u => u.Id == unitId);
+
+            if (unitFound == null)
+                return NotFound();
+
+            return unitFound;
         }
 
         [SwaggerOperation(Summary = "Get a specific user")]
-        [HttpGet("users/{userId}/units/{unitId}/location")]
-        public ActionResult<string> GetUnitLocation(string userId, string unitId, Unit unit)
+        [HttpGet("users/{userId}/Units/{unitId}/location")]
+        public ActionResult<UnitInformation> GetUnitLocation(string userId, string unitId)
         {
-            return unit.Planet;
+            UserWithUnits userWithUnits = userDB.users.FirstOrDefault(u => u.Id == userId);
+
+            Unit unitFound = userWithUnits.Units.FirstOrDefault(u => u.Id == unitId);
+
+            UnitInformation unitInformation = new UnitInformation();
+            unitInformation.System = unitFound.System;
+            unitInformation.Planet = unitFound.Planet;
+
+            SystemSpecification system = map.Map.Systems.FirstOrDefault(s => s.Name == unitFound.System);
+            if (system == null)
+                return NotFound();
+            PlanetSpecification planet = system.Planets.FirstOrDefault(p => p.Name == unitFound.Planet);
+
+
+            unitInformation.ResourcesQuantity = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
+
+            return unitInformation;
         }
     }
 }
