@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net;
-
-namespace Duncan.Model
+﻿namespace Duncan.Model
 {
-    public class User
+    public abstract class User
     {
         public string? Id { get; set; }
         public string? Pseudo { get; set; }
-        public Unit? unit { get; set; }
     }
 }

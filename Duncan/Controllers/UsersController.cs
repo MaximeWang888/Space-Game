@@ -9,16 +9,24 @@ namespace Duncan.Controllers
     public class UsersController : ControllerBase
     {
 
-        private readonly List<User> users = new();
+        private readonly List<UserUnit> users = new();
 
-        public UsersController(List<User> users)
+
+        [SwaggerOperation(Summary = "Get a specific user")]
+        [HttpGet("{id}")]
+        public ActionResult<UserUnit> GetUserById(string id)
         {
-            this.users = users;
+            var user = users.FirstOrDefault(u => u.Id == id);
+
+            if (user == null)
+                return NotFound();
+
+            return user;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
         [HttpPut("{id}")]
-        public ActionResult<User> PutUserById(string id, [FromBody] User user)
+        public ActionResult<UserUnit> PutUserById(string id, [FromBody] User user)
         {
             if (user.Id.Length < 2)
                 return BadRequest("Invalid user ID");
@@ -29,25 +37,19 @@ namespace Duncan.Controllers
             if (user.Id != id)
                 return BadRequest("Inconsistent user ID");
 
-            Unit unit = new Unit("1");
+            users.Add(new UserUnit());
 
-            user.unit = unit;
-
-            users.Add(user);
-
-            return user;
+            return users.First();
         }
 
-        [SwaggerOperation(Summary = "Get a specific user")]
-        [HttpGet("{id}")]
-        public ActionResult<User> GetUserById(string id)
+        private Unit initUnit()
         {
-            var user = users.FirstOrDefault(u => u.Id == id);
+            Unit unit = new Unit();
+            unit.Type = "scout";
+            unit.System = "system";
+            unit.Planet = "planet";
 
-            if (user == null)
-                return NotFound();
-
-            return user;
+            return unit;
         }
 
     }
