@@ -6,29 +6,25 @@ namespace Duncan.Controllers
 {
     public class UnitsController : ControllerBase
     {
-        private readonly UsersController usersController;
+        private readonly UserDB? userDB;
 
-        public UnitsController(UsersController usersController)
+        public UnitsController(UserDB userDB)
         {
-            this.usersController = usersController;
+            this.userDB = userDB;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
-        [HttpGet("{userPath}/units")]
-        public List<Unit> GetAllUnitByUserId(string userId)
+        [HttpGet("users/{userId}/Units")]
+        public List<Unit> GetAllUnit(string userId)
         {
-            // var userIdValue = userId.Split('/')[1];
+            UserWithUnits user = userDB.users.FirstOrDefault(u => u.Id == userId);
 
-            // List<UserWithUnits> users = usersController.GetAllUsers();
-            // UserWithUnits userWithUnits = users.FirstOrDefault(u => u.Id == userIdValue);
-
-            // return userWithUnits.Units;
-            return new List<Unit>();
+            return user.Units;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
-        [HttpPut("users/{id}/units/{unitId}")]
-        public ActionResult<List<Unit>> PutUnitById(string id, [FromBody] Unit unit)
+        [HttpPut("users/{userId}/units/{unitId}")]
+        public ActionResult<List<Unit>> PutUnitById(string userId, string unitId, [FromBody] Unit unit)
         {
             if (unit == null)
                 return BadRequest("Request body is required");
@@ -36,20 +32,17 @@ namespace Duncan.Controllers
             if (unit.Id.Length < 2)
                 return BadRequest("Invalid user ID");
 
-            if (unit.Id != id)
+            if (unit.Id != userId)
                 return BadRequest("Inconsistent unit ID");
 
-            List<UserWithUnits> users = usersController.GetAllUsers();
-            UserWithUnits userWithUnits = users.FirstOrDefault(u => u.Id == id);
-
-            // var userWithUnits = users.Find(u => u.Id == id);
+            UserWithUnits userWithUnits = userDB.users.FirstOrDefault(u => u.Id == userId);
 
             return userWithUnits.Units;
         }
 
         [SwaggerOperation(Summary = "Get a specific user")]
-        [HttpGet("users/{id}/units/{unitId}/location")]
-        public ActionResult<string> GetUnitLocation(string userPath, Unit unit)
+        [HttpGet("users/{userId}/units/{unitId}/location")]
+        public ActionResult<string> GetUnitLocation(string userId, string unitId, Unit unit)
         {
             return unit.Planet;
         }

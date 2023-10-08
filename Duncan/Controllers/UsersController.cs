@@ -9,11 +9,11 @@ namespace Duncan.Controllers
     public class UsersController : ControllerBase
     {
 
-        private readonly List<UserWithUnits> users = new();
+        private readonly UserDB? userDB;
 
-        public UsersController(List<UserWithUnits> users)
+        public UsersController(UserDB userDB)
         {
-            this.users = users;
+            this.userDB = userDB;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
@@ -30,12 +30,15 @@ namespace Duncan.Controllers
                 return BadRequest("Inconsistent user ID");
 
             Unit unit = new Unit();
+            unit.Planet = "Planet";
+            unit.System = "System";
+            unit.Type = "scout";
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
             userWithUnits.Pseudo = user.Pseudo;
             userWithUnits.Units.Add(unit);
 
-            users.Add(userWithUnits);
+            userDB.users.Add(userWithUnits);
 
             return user;
         }
@@ -44,7 +47,7 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            UserWithUnits user = users.FirstOrDefault(u => u.Id == id);
+            UserWithUnits user = userDB.users.FirstOrDefault(u => u.Id == id);
 
             if (user == null)
                 return NotFound();
@@ -58,7 +61,7 @@ namespace Duncan.Controllers
 
         public List<UserWithUnits> GetAllUsers()
         {
-            return users;
+            return userDB.users;
         }
     }
 }

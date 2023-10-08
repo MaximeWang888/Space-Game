@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IMapGenerator, MapGeneratorWrapper>();
 builder.Services.AddSingleton<List<User>>();
 builder.Services.AddSingleton<List<UserWithUnits>>();
+builder.Services.AddSingleton<UserDB>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
