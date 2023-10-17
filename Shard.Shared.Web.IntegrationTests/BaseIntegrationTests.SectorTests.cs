@@ -69,6 +69,21 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         array[0]["planets"][0]["size"].AssertInteger();
     }
 
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "2")]
+    public async Task PlanetsDoNotHaveResources()
+    {
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("systems");
+
+        var array = await response.AssertSuccessJsonAsync();
+
+        var allPlanets = array.SelectTokens("[*].planets[*]").Cast<IDictionary<string, JToken>>();
+        var allProperties = allPlanets.SelectMany(planet => planet.Keys).Distinct();
+        Assert.DoesNotContain("resource", string.Join(",", allProperties));
+    }
+
     public async Task<StarSystem> GetFirstSystem()
     {
         using var client = factory.CreateClient();

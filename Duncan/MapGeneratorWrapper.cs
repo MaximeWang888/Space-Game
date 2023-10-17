@@ -1,21 +1,15 @@
-﻿using Duncan.Interfaces;
-using Shard.Shared.Core;
+﻿using Shard.Shared.Core;
 
 namespace Duncan
 {
-    public class MapGeneratorWrapper : IMapGenerator
+    public class MapGeneratorWrapper 
     {
-        private readonly SectorSpecification map;
+        public SectorSpecification Map { get; }
 
         public MapGeneratorWrapper()
         {
             MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "MohaMax" };
-            map = new MapGenerator(mapOptions).Generate();
-        }
-
-        public SectorSpecification getGenerator()
-        {
-            return map;
+            Map = new MapGenerator(mapOptions).Generate();
         }
     }
 }
