@@ -1,14 +1,20 @@
 using Duncan;
 using Duncan.Model;
+using Duncan.Repositories;
+using Duncan.Services;
+using Duncan.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddSingleton<MapGeneratorWrapper>();
-builder.Services.AddSingleton<List<User>>();
-builder.Services.AddSingleton<List<UserWithUnits>>();
 builder.Services.AddSingleton<UserDB>();
+builder.Services.AddSingleton<UnitsRepo>();
+builder.Services.AddSingleton<UsersRepo>();
+builder.Services.AddSingleton<PlanetRepo>();
+builder.Services.AddSingleton<SystemsRepo>();
+builder.Services.AddSingleton<SystemsService>();
+builder.Services.AddSingleton<UnitsService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

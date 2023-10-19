@@ -1,6 +1,6 @@
 using Duncan.Model;
+using Duncan.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
@@ -12,11 +12,13 @@ namespace Duncan.Controllers
 
         private readonly UserDB? userDB;
         private readonly MapGeneratorWrapper map;
+        private readonly UsersRepo _usersRepo;
 
-        public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator)
+        public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
         {
             this.userDB = userDB;
             this.map = mapGenerator;
+            this._usersRepo = usersRepo;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
@@ -32,14 +34,28 @@ namespace Duncan.Controllers
             if (user.Id != id)
                 return BadRequest("Inconsistent user ID");
 
-            Unit unit = new Unit();
-            unit.Planet = map.Map.Systems.First().Planets.First().Name;
-            unit.System = map.Map.Systems.First().Name;
-            unit.Type = "scout";
+            Unit unit_1 = new Unit
+            {
+                Planet = map.Map.Systems.First().Planets.First().Name,
+                System = map.Map.Systems.First().Name,
+                DestinationSystem = map.Map.Systems.First().Name,
+                Type = "scout"
+            };
+
+            Unit unit_2 = new Unit
+            {
+                Planet = map.Map.Systems.First().Planets.First().Name,
+                System = map.Map.Systems.First().Name,
+                DestinationSystem = map.Map.Systems.First().Name,
+                Type = "builder",
+            };
+
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
             userWithUnits.Pseudo = user.Pseudo;
-            userWithUnits.Units?.Add(unit);
+
+            userWithUnits.Units?.Add(unit_1);
+            userWithUnits.Units?.Add(unit_2);
 
             userDB?.users.Add(userWithUnits);
 
@@ -50,19 +66,15 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            if (userDB == null)
-                return NotFound("Not Found User DB");
-
-            UserWithUnits? user = userDB.users.FirstOrDefault(u => u.Id == id);
-
-            if (user == null)
+            UserWithUnits? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
+            if (userUnit == null)
                 return NotFound();
 
-            User userF = new User();
-            userF.Id = user.Id;
-            userF.Pseudo = user.Pseudo;
+            User user = new User();
+            user.Id = userUnit.Id;
+            user.Pseudo = userUnit.Pseudo;
 
-            return userF;
+            return user;
         }
 
     }
