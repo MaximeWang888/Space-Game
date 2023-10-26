@@ -23,11 +23,11 @@ namespace Duncan.Controllers
         [HttpPut("{id}")]
         public ActionResult<User> PutUserById(string id, [FromBody] User user)
         {
-            if (user.Id.Length < 2)
-                return BadRequest("Invalid user ID");
-
             if (user == null)
                 return BadRequest("Request body is required");
+
+            if (user.Id?.Length < 2)
+                return BadRequest("Invalid user ID");
 
             if (user.Id != id)
                 return BadRequest("Inconsistent user ID");
@@ -39,9 +39,9 @@ namespace Duncan.Controllers
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
             userWithUnits.Pseudo = user.Pseudo;
-            userWithUnits.Units.Add(unit);
+            userWithUnits.Units?.Add(unit);
 
-            userDB.users.Add(userWithUnits);
+            userDB?.users.Add(userWithUnits);
 
             return user;
         }
@@ -50,7 +50,10 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            UserWithUnits user = userDB.users.FirstOrDefault(u => u.Id == id);
+            if (userDB == null)
+                return NotFound("Not Found User DB");
+
+            UserWithUnits? user = userDB.users.FirstOrDefault(u => u.Id == id);
 
             if (user == null)
                 return NotFound();

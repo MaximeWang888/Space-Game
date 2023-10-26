@@ -28,9 +28,8 @@ namespace Duncan.Controllers
         public SystemSpecification GetSystem(string systemName)
         {
             IReadOnlyList<SystemSpecification> systems = GetAllSystems();
-            IEnumerable<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName);
 
-            return filteredSystem.First();
+            return systems.First(system => system.Name == systemName);
         }
 
         [SwaggerOperation(Summary = "Get all planets of a specific system")]
