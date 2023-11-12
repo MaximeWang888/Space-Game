@@ -50,10 +50,22 @@ namespace Duncan.Controllers
                 Type = "builder",
             };
 
+            var ResourcesQuantity = new Dictionary<string, int>
+               {
+                {"aluminium", 0},
+                {"carbon", 20},
+                {"gold", 0},
+                {"iron", 10},
+                {"oxygen", 50},
+                {"titanium", 0},
+                {"water", 50}
+            };
+
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
             userWithUnits.Pseudo = user.Pseudo;
 
+            userWithUnits.ResourcesQuantity = ResourcesQuantity;
             userWithUnits.Units?.Add(unit_1);
             userWithUnits.Units?.Add(unit_2);
 
@@ -67,12 +79,15 @@ namespace Duncan.Controllers
         public ActionResult<User> GetUserById(string id)
         {
             UserWithUnits? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
+
             if (userUnit == null)
                 return NotFound();
 
             User user = new User();
             user.Id = userUnit.Id;
             user.Pseudo = userUnit.Pseudo;
+            user.ResourcesQuantity = userUnit.ResourcesQuantity;
+
 
             return user;
         }
