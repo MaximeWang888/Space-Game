@@ -88,7 +88,6 @@ namespace Duncan.Controllers
             user.Pseudo = userUnit.Pseudo;
             user.ResourcesQuantity = userUnit.ResourcesQuantity;
 
-
             return user;
         }
 

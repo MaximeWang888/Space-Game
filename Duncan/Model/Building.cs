@@ -8,7 +8,6 @@
         public string? Planet { get; set; }
         public string? ResourceCategory { get; set; }
         public Boolean? IsBuilt { get; set; }
-
         public DateTime? EstimatedBuildTime { get; set; }
         public Building()
         {

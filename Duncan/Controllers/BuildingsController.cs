@@ -2,6 +2,7 @@ using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
@@ -12,11 +13,13 @@ namespace Duncan.Controllers
     {
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
+        private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock)
         {
             this._unitsRepo = unitsRepo;
             this._usersRepo = usersRepo;
+            this._clock = clock;
         }
 
         [SwaggerOperation(Summary = "Create a building at a location")]
@@ -49,13 +52,25 @@ namespace Duncan.Controllers
             if (unitFound.DestinationPlanet != unitFound.Planet)
                 return BadRequest("Builder is not over a planet");
 
+            IList<string> resourceKinds = new List<string>
+                        {
+                            "solid",
+                            "liquid",
+                            "gaseous"
+                        };
+            
+             if (!resourceKinds.Contains(building.ResourceCategory))
+                     return BadRequest();
+
             var buildingCreated = new Building
             {
                 Id = building.Id,
                 Type = "mine",
                 System = unitFound.System,
                 Planet = unitFound.Planet,
-                ResourceCategory = "solid",
+                IsBuilt = false,
+                EstimatedBuildTime = _clock.Now.AddMinutes(5),
+                ResourceCategory = building.ResourceCategory,
             };
 
             userWithUnits.Buildings.Add(buildingCreated);
@@ -84,10 +99,10 @@ namespace Duncan.Controllers
 
             UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
 
-            var building = userWithUnits.Buildings.FirstOrDefault(b => b.Id == buildingId);
-
             if (userWithUnits == null)
                 return NotFound();
+
+            var building = userWithUnits.Buildings.FirstOrDefault(b => b.Id == buildingId);
 
             if (building == null)
                 return NotFound();
