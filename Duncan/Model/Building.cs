@@ -1,4 +1,6 @@
-﻿namespace Duncan.Model
+﻿using System.Text.Json.Serialization;
+
+namespace Duncan.Model
 {
     public class Building
     {
@@ -9,6 +11,13 @@
         public string? ResourceCategory { get; set; }
         public Boolean? IsBuilt { get; set; }
         public DateTime? EstimatedBuildTime { get; set; }
+
+        [JsonIgnore]
+        public Task? task { get; set; }
+
+        [JsonIgnore]
+        public Task? taskTwo { get; set; }
+
         public Building()
         {
             this.Id = Guid.NewGuid().ToString();

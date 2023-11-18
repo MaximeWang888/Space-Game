@@ -6,7 +6,6 @@
         public string? Pseudo { get; set; }
         public List<Unit>? Units { get; set; } = new List<Unit>();
         public List<Building>? Buildings { get; set; } = new List<Building>();
-
-        public IReadOnlyDictionary<string, int>? ResourcesQuantity { get; set; }
+        public IDictionary<string, int>? ResourcesQuantity { get; set; }
     }
 }

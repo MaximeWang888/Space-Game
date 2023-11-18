@@ -1,5 +1,6 @@
 using Duncan.Model;
 using Duncan.Repositories;
+using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
@@ -13,13 +14,15 @@ namespace Duncan.Controllers
     {
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
+        private readonly BuildingsService _buildingsService;
         private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService)
         {
             this._unitsRepo = unitsRepo;
             this._usersRepo = usersRepo;
             this._clock = clock;
+            this._buildingsService = buildingsService;
         }
 
         [SwaggerOperation(Summary = "Create a building at a location")]
@@ -73,14 +76,19 @@ namespace Duncan.Controllers
                 ResourceCategory = building.ResourceCategory,
             };
 
-            userWithUnits.Buildings.Add(buildingCreated);
+            buildingCreated.task = _buildingsService.processBuild(buildingCreated, userWithUnits.ResourcesQuantity);
+
+            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated.ResourceCategory,userWithUnits.ResourcesQuantity);
+
+
+            userWithUnits?.Buildings?.Add(buildingCreated);
 
             return Created("", buildingCreated);
         }
         [SwaggerOperation(Summary = "Create a building at a location")]
         [HttpGet("/users/{userId}/buildings")]
 
-        public ActionResult<List<Building>> GetBuilding(string userId)
+        public ActionResult<List<Building>> GetBuildings(string userId)
         {
 
             UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -94,7 +102,7 @@ namespace Duncan.Controllers
         [SwaggerOperation(Summary = "Create a building at a location")]
         [HttpGet("/users/{userId}/buildings/{buildingId}")]
 
-        public ActionResult<Building> GetSingleBuilding(string userId, string buildingId)
+        public async Task<ActionResult<Building>> GetSingleBuilding(string userId, string buildingId)
         {
 
             UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -102,7 +110,11 @@ namespace Duncan.Controllers
             if (userWithUnits == null)
                 return NotFound();
 
-            var building = userWithUnits.Buildings.FirstOrDefault(b => b.Id == buildingId);
+            var building = userWithUnits?.Buildings?.FirstOrDefault(b => b.Id == buildingId);
+
+            await building.task;
+
+            await building.taskTwo;
 
             if (building == null)
                 return NotFound();

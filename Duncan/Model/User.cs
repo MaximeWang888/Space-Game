@@ -6,6 +6,6 @@
         public string? Pseudo { get; set; }
         public string? DateOfCreation { get; set; }
 
-        public IReadOnlyDictionary<string, int>? ResourcesQuantity { get; set; }
+        public IDictionary<string, int>? ResourcesQuantity { get; set; }
     }
 }
