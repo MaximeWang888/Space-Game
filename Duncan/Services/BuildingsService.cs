@@ -1,6 +1,5 @@
 ﻿using Duncan.Model;
 using Duncan.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Shard.Shared.Core;
 
 namespace Duncan.Services
@@ -49,30 +48,56 @@ namespace Duncan.Services
             {
                 case "solid":
                     await _clock.Delay(360000); //6 minutes
-                    resourcesQuantity["aluminium"] += 64;
 
                     var solidResources = planetResources
-            .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
-                         !kv.Key.Equals("oxygen", StringComparison.OrdinalIgnoreCase)) 
-            .ToDictionary(kv => kv.Key, kv => kv.Value);
+                         .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
+                         !kv.Key.Equals("oxygen", StringComparison.OrdinalIgnoreCase))
+                        .ToDictionary(kv => kv.Key, kv => kv.Value);
 
                     string maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
                     string minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
 
-                    while (planetResources[maxKey] > planetResources[minKey])
-                     {
+                    var copy = user.ResourcesQuantity[maxKey];
+
+                    var value = planetResources[maxKey];
+
+                    if (maxKey == minKey)
+                    {
+                        while (user.ResourcesQuantity[maxKey] < value + copy)
+                        {
+                            user.ResourcesQuantity[maxKey] += 1;
+                            planetResources[maxKey] -= 1;
+                            await _clock.Delay(60000);
+                        }
+                    }
+                    else
+                    {
+                        // planetResources.carbon 63
+                        // planetResources.iron 28
+
+                        // planetResources.carbon 28
+                        // exit - boucle
+
+                        // Mandatory testing equality
+                        while (planetResources[maxKey] > planetResources[minKey])
+                        {
                             user.ResourcesQuantity[maxKey] += 1;
                             planetResources[maxKey] -= 1;
                             maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
                             minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
                             await _clock.Delay(60000);
-                     }
-  
-                    user.ResourcesQuantity[minKey] += 1;
+                        }
 
-                    await _clock.Delay(60000);
-
-                    user.ResourcesQuantity[maxKey] += 1;
+                        while (planetResources[maxKey] > 0 && planetResources[minKey] > 0)
+                        {
+                            user.ResourcesQuantity[minKey] += 1;
+                            planetResources[minKey] -= 1;
+                            await _clock.Delay(60000);
+                            user.ResourcesQuantity[maxKey] += 1;
+                            planetResources[maxKey] -= 1;
+                            await _clock.Delay(60000);
+                        }
+                    }
                     break;
 
                 case "liquid":
