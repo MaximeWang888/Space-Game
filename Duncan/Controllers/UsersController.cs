@@ -10,14 +10,14 @@ namespace Duncan.Controllers
     public class UsersController : ControllerBase
     {
 
-        private readonly UserDB? userDB;
-        private readonly MapGeneratorWrapper map;
+        private readonly UserDB? _userDB;
+        private readonly MapGeneratorWrapper _map;
         private readonly UsersRepo _usersRepo;
 
         public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
         {
-            this.userDB = userDB;
-            this.map = mapGenerator;
+            this._userDB = userDB;
+            this._map = mapGenerator;
             this._usersRepo = usersRepo;
         }
 
@@ -36,17 +36,17 @@ namespace Duncan.Controllers
 
             Unit unit_1 = new Unit
             {
-                Planet = map.Map.Systems.First().Planets.First().Name,
-                System = map.Map.Systems.First().Name,
-                DestinationSystem = map.Map.Systems.First().Name,
+                Planet = _map.Map.Systems.First().Planets.First().Name,
+                System = _map.Map.Systems.First().Name,
+                DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "scout"
             };
 
             Unit unit_2 = new Unit
             {
-                Planet = map.Map.Systems.First().Planets.First().Name,
-                System = map.Map.Systems.First().Name,
-                DestinationSystem = map.Map.Systems.First().Name,
+                Planet = _map.Map.Systems.First().Planets.First().Name,
+                System = _map.Map.Systems.First().Name,
+                DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "builder",
             };
 
@@ -69,7 +69,7 @@ namespace Duncan.Controllers
             userWithUnits.Units?.Add(unit_1);
             userWithUnits.Units?.Add(unit_2);
 
-            userDB?.users.Add(userWithUnits);
+            _userDB?.users.Add(userWithUnits);
 
             return user;
         }

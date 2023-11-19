@@ -1,4 +1,6 @@
-﻿namespace Duncan.Model
+﻿using System.Text.Json.Serialization;
+
+namespace Duncan.Model
 {
     public class Planet
     {

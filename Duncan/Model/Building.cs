@@ -14,9 +14,9 @@ namespace Duncan.Model
 
         [JsonIgnore]
         public Task? task { get; set; }
-
-        [JsonIgnore]
         public Task? taskTwo { get; set; }
+
+        public Task? taskThree { get; set; }
 
         public Building()
         {

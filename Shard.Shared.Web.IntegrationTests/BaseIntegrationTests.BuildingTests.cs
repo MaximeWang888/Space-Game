@@ -1,4 +1,3 @@
-using Shard.Shared.Web.IntegrationTests.TestEntities;
 using System.Net;
 
 namespace Shard.Shared.Web.IntegrationTests

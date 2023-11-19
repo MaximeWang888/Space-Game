@@ -76,10 +76,9 @@ namespace Duncan.Controllers
                 ResourceCategory = building.ResourceCategory,
             };
 
-            buildingCreated.task = _buildingsService.processBuild(buildingCreated, userWithUnits.ResourcesQuantity);
+            buildingCreated.task = _buildingsService.processBuild(userWithUnits,buildingCreated, userWithUnits.ResourcesQuantity,building.BuilderId) ;
 
-            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated.ResourceCategory,userWithUnits.ResourcesQuantity);
-
+            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated, userWithUnits,buildingCreated.ResourceCategory,userWithUnits.ResourcesQuantity);
 
             userWithUnits?.Buildings?.Add(buildingCreated);
 
@@ -102,9 +101,8 @@ namespace Duncan.Controllers
         [SwaggerOperation(Summary = "Create a building at a location")]
         [HttpGet("/users/{userId}/buildings/{buildingId}")]
 
-        public async Task<ActionResult<Building>> GetSingleBuilding(string userId, string buildingId)
+        public ActionResult<Building> GetSingleBuilding(string userId, string buildingId)
         {
-
             UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (userWithUnits == null)
@@ -112,13 +110,9 @@ namespace Duncan.Controllers
 
             var building = userWithUnits?.Buildings?.FirstOrDefault(b => b.Id == buildingId);
 
-            await building.task;
-
-            await building.taskTwo;
-
             if (building == null)
                 return NotFound();
-
+ 
             return Ok(building);
         }
     }
