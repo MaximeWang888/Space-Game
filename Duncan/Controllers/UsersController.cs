@@ -52,12 +52,12 @@ namespace Duncan.Controllers
 
             var ResourcesQuantity = new Dictionary<string, int>
                {
-                {"aluminium", 0},
-                {"carbon", 20},
-                {"gold", 0},
-                {"iron", 10},
-                {"oxygen", 50},
                 {"titanium", 0},
+                {"gold", 0},
+                {"aluminium", 0},
+                {"iron", 10},
+                {"carbon", 20},
+                {"oxygen", 50},
                 {"water", 50}
             };
 

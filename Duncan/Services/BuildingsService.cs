@@ -43,26 +43,36 @@ namespace Duncan.Services
 
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(building.Planet, system);
 
-            var ok = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
+            var planetResources = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
 
             switch (ressourceCategory)
             {
                 case "solid":
-
                     await _clock.Delay(360000); //6 minutes
                     resourcesQuantity["aluminium"] += 64;
 
-                     while (ok["carbon"] > ok["iron"])
+                    var solidResources = planetResources
+            .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
+                         !kv.Key.Equals("oxygen", StringComparison.OrdinalIgnoreCase)) 
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                    string maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+                    string minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
+
+                    while (planetResources[maxKey] > planetResources[minKey])
                      {
-                            user.ResourcesQuantity["carbon"] += 1;
-                            ok["carbon"] -= 1;
+                            user.ResourcesQuantity[maxKey] += 1;
+                            planetResources[maxKey] -= 1;
+                            maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+                            minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
                             await _clock.Delay(60000);
                      }
-                    user.ResourcesQuantity["iron"] += 1;
+  
+                    user.ResourcesQuantity[minKey] += 1;
 
                     await _clock.Delay(60000);
 
-                    user.ResourcesQuantity["carbon"] += 1;
+                    user.ResourcesQuantity[maxKey] += 1;
                     break;
 
                 case "liquid":
