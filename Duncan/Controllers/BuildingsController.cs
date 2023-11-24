@@ -68,6 +68,7 @@ namespace Duncan.Controllers
             var buildingCreated = new Building
             {
                 Id = building.Id,
+                BuilderId = building.BuilderId,
                 Type = "mine",
                 System = unitFound.System,
                 Planet = unitFound.Planet,
@@ -76,9 +77,9 @@ namespace Duncan.Controllers
                 ResourceCategory = building.ResourceCategory,
             };
 
-            buildingCreated.task = _buildingsService.processBuild(userWithUnits,buildingCreated, userWithUnits.ResourcesQuantity,building.BuilderId) ;
+            buildingCreated.task = _buildingsService.processBuild(buildingCreated);
 
-            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated, userWithUnits,buildingCreated.ResourceCategory,userWithUnits.ResourcesQuantity);
+            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated, userWithUnits , buildingCreated.ResourceCategory);
 
             userWithUnits?.Buildings?.Add(buildingCreated);
 
@@ -100,8 +101,7 @@ namespace Duncan.Controllers
         }
         [SwaggerOperation(Summary = "Create a building at a location")]
         [HttpGet("/users/{userId}/buildings/{buildingId}")]
-
-        public ActionResult<Building> GetSingleBuilding(string userId, string buildingId)
+        public async Task<ActionResult<Building>> GetSingleBuilding(string userId, string buildingId)
         {
             UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -112,7 +112,21 @@ namespace Duncan.Controllers
 
             if (building == null)
                 return NotFound();
- 
+
+            if (building.EstimatedBuildTime.HasValue)
+            {
+                var timeOfArrival = ((building.EstimatedBuildTime.Value - _clock.Now).TotalSeconds);
+
+                if (timeOfArrival <= 2)
+                {
+                    await building.task;
+                }
+                else
+                {
+                    building.IsBuilt = false;
+                }
+            }
+
             return Ok(building);
         }
     }
