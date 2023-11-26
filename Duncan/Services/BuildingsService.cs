@@ -19,19 +19,17 @@ namespace Duncan.Services
         }
         public async Task ProcessBuild(Building building)
         {
-            if (building.IsBuilt == false)
-            {
-                await _clock.Delay(300000); //5 minutes
-                building.IsBuilt = true;
-                building.EstimatedBuildTime = null;
-            }
+            building.CancellationSource = new CancellationTokenSource();
+            await _clock.Delay(300000, building.CancellationSource.Token); //5 minutes
+            building.IsBuilt = true;
+            building.EstimatedBuildTime = null;
         }
         public async Task ProcessExtract(Building building, UserWithUnits user, string resourceCategory)
         {
             SystemSpecification? system = _systemsRepo.GetSystemByName(building.System, _map.Map.Systems);
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(building.Planet, system);
 
-            await building.task;
+            await building.Task;
             await _clock.Delay(60000);
 
             if (building.IsBuilt == true && user != null && user.ResourcesQuantity != null)
@@ -125,6 +123,32 @@ namespace Duncan.Services
                 planetResources["oxygen"] -= 1;
                 await _clock.Delay(60000);
             }
+        }
+        public Building CreateBuilding(BuildingBody building, Unit unitFound)
+        {
+            return new Building
+            {
+                Id = building.Id,
+                BuilderId = building.BuilderId,
+                Type = "mine",
+                System = unitFound.System,
+                Planet = unitFound.Planet,
+                IsBuilt = false,
+                EstimatedBuildTime = _clock.Now.AddMinutes(5),
+                ResourceCategory = building.ResourceCategory,
+            };
+        }
+
+        public bool ValidateResourceCategory(string resourceCategory)
+        {
+            IList<string> resourceKinds = new List<string> { "solid", "liquid", "gaseous" };
+            return resourceKinds.Contains(resourceCategory);
+        }
+
+        public void RunTasksOnBuilding(Building building, UserWithUnits userWithUnits)
+        {
+            building.Task = ProcessBuild(building);
+            building.TaskTwo = ProcessExtract(building, userWithUnits, building.ResourceCategory);
         }
     }
 }

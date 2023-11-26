@@ -55,12 +55,12 @@ namespace Duncan.Controllers
             if (unitFound.DestinationPlanet != unitFound.Planet)
                 return BadRequest("Builder is not over a planet");
 
-            if (!ValidateResourceCategory(building.ResourceCategory))
+            if (!_buildingsService.ValidateResourceCategory(building.ResourceCategory))
                 return BadRequest();
 
-            var buildingCreated = CreateBuilding(building, unitFound);
+            var buildingCreated = _buildingsService.CreateBuilding(building, unitFound);
 
-            RunTasksOnBuilding(buildingCreated, userWithUnits);
+            _buildingsService.RunTasksOnBuilding(buildingCreated, userWithUnits);
 
             userWithUnits?.Buildings?.Add(buildingCreated);
 
@@ -77,7 +77,6 @@ namespace Duncan.Controllers
 
             if (userWithUnits == null)
                 return NotFound();
-
 
             return Ok(userWithUnits.Buildings);
         }
@@ -101,7 +100,14 @@ namespace Duncan.Controllers
 
                 if (timeOfArrival <= 2)
                 {
-                    await building.task;
+                    try
+                    {
+                        await building.Task;
+                    }
+                    catch
+                    {
+                        return NotFound();
+                    }
                 }
                 else
                 {
@@ -110,33 +116,6 @@ namespace Duncan.Controllers
             }
 
             return Ok(building);
-        }
-
-        private Building CreateBuilding(BuildingBody building, Unit unitFound)
-        {
-            return new Building
-            {
-                Id = building.Id,
-                BuilderId = building.BuilderId,
-                Type = "mine",
-                System = unitFound.System,
-                Planet = unitFound.Planet,
-                IsBuilt = false,
-                EstimatedBuildTime = _clock.Now.AddMinutes(5),
-                ResourceCategory = building.ResourceCategory,
-            };
-        }
-
-        private bool ValidateResourceCategory(string resourceCategory)
-        {
-            IList<string> resourceKinds = new List<string> { "solid", "liquid", "gaseous" };
-            return resourceKinds.Contains(resourceCategory);
-        }
-
-        private void RunTasksOnBuilding(Building building, UserWithUnits userWithUnits)
-        {
-            building.task = _buildingsService.ProcessBuild(building);
-            building.taskTwo = _buildingsService.ProcessExtract(building, userWithUnits, building.ResourceCategory);
         }
     }
 }

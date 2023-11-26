@@ -16,11 +16,13 @@ namespace Duncan.Model
         public DateTime? EstimatedBuildTime { get; set; }
 
         [JsonIgnore]
-        public Task? task { get; set; }
+        public Task? Task { get; set; }
 
         [JsonIgnore]
-        public Task? taskTwo { get; set; }
+        public Task? TaskTwo { get; set; }
 
+        [JsonIgnore]
+        public CancellationTokenSource? CancellationSource { get; set; }
         public Building()
         {
             this.Id = Guid.NewGuid().ToString();
