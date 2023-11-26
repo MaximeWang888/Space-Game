@@ -55,36 +55,18 @@ namespace Duncan.Controllers
             if (unitFound.DestinationPlanet != unitFound.Planet)
                 return BadRequest("Builder is not over a planet");
 
-            IList<string> resourceKinds = new List<string>
-                        {
-                            "solid",
-                            "liquid",
-                            "gaseous"
-                        };
-            
-             if (!resourceKinds.Contains(building.ResourceCategory))
-                     return BadRequest();
+            if (!ValidateResourceCategory(building.ResourceCategory))
+                return BadRequest();
 
-            var buildingCreated = new Building
-            {
-                Id = building.Id,
-                BuilderId = building.BuilderId,
-                Type = "mine",
-                System = unitFound.System,
-                Planet = unitFound.Planet,
-                IsBuilt = false,
-                EstimatedBuildTime = _clock.Now.AddMinutes(5),
-                ResourceCategory = building.ResourceCategory,
-            };
+            var buildingCreated = CreateBuilding(building, unitFound);
 
-            buildingCreated.task = _buildingsService.processBuild(buildingCreated);
-
-            buildingCreated.taskTwo =  _buildingsService.processExtract(buildingCreated, userWithUnits , buildingCreated.ResourceCategory);
+            RunTasksOnBuilding(buildingCreated, userWithUnits);
 
             userWithUnits?.Buildings?.Add(buildingCreated);
 
             return Created("", buildingCreated);
         }
+
         [SwaggerOperation(Summary = "Create a building at a location")]
         [HttpGet("/users/{userId}/buildings")]
 
@@ -128,6 +110,33 @@ namespace Duncan.Controllers
             }
 
             return Ok(building);
+        }
+
+        private Building CreateBuilding(BuildingBody building, Unit unitFound)
+        {
+            return new Building
+            {
+                Id = building.Id,
+                BuilderId = building.BuilderId,
+                Type = "mine",
+                System = unitFound.System,
+                Planet = unitFound.Planet,
+                IsBuilt = false,
+                EstimatedBuildTime = _clock.Now.AddMinutes(5),
+                ResourceCategory = building.ResourceCategory,
+            };
+        }
+
+        private bool ValidateResourceCategory(string resourceCategory)
+        {
+            IList<string> resourceKinds = new List<string> { "solid", "liquid", "gaseous" };
+            return resourceKinds.Contains(resourceCategory);
+        }
+
+        private void RunTasksOnBuilding(Building building, UserWithUnits userWithUnits)
+        {
+            building.task = _buildingsService.ProcessBuild(building);
+            building.taskTwo = _buildingsService.ProcessExtract(building, userWithUnits, building.ResourceCategory);
         }
     }
 }

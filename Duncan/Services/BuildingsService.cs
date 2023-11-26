@@ -17,7 +17,7 @@ namespace Duncan.Services
             this._planetRepo = planetRepo;
             this._clock = clock;
         }
-        public async Task processBuild(Building building)
+        public async Task ProcessBuild(Building building)
         {
             if (building.IsBuilt == false)
             {
@@ -26,89 +26,104 @@ namespace Duncan.Services
                 building.EstimatedBuildTime = null;
             }
         }
-        public async Task processExtract(Building building, UserWithUnits user, String ressourceCategory)
+        public async Task ProcessExtract(Building building, UserWithUnits user, string resourceCategory)
         {
             SystemSpecification? system = _systemsRepo.GetSystemByName(building.System, _map.Map.Systems);
-
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(building.Planet, system);
 
-            var planetResources = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
-
             await building.task;
-
             await _clock.Delay(60000);
 
-            if (building.IsBuilt == true)
+            if (building.IsBuilt == true && user != null && user.ResourcesQuantity != null)
             {
-                switch (ressourceCategory)
+                var planetResources = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
+
+                switch (resourceCategory)
                 {
                     case "solid":
-                        var solidResources = planetResources
-                             .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
-                             !kv.Key.Equals("oxygen", StringComparison.OrdinalIgnoreCase))
-                            .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                        string maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
-                        string minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
-
-                        var copy = user.ResourcesQuantity[maxKey];
-
-                        var value = planetResources[maxKey];
-
-                        if (maxKey == minKey)
-                        {
-                            while (user.ResourcesQuantity[maxKey] < value + copy)
-                            {
-                                user.ResourcesQuantity[maxKey] += 1;
-                                planetResources[maxKey] -= 1;
-                                await _clock.Delay(60000);
-                            }
-                        }
-                        else
-                        {
-                            while (planetResources[maxKey] > planetResources[minKey])
-                            {
-                                user.ResourcesQuantity[maxKey] += 1;
-                                planetResources[maxKey] -= 1;
-                                maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
-                                minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
-                                await _clock.Delay(60000);
-                            }
-
-                            while (planetResources[maxKey] > 0 && planetResources[minKey] > 0)
-                            {
-                                user.ResourcesQuantity[minKey] += 1;
-                                planetResources[minKey] -= 1;
-                                await _clock.Delay(60000);
-                                user.ResourcesQuantity[maxKey] += 1;
-                                planetResources[maxKey] -= 1;
-                                await _clock.Delay(60000);
-                            }
-                        }
+                        await ProcessSolidResources(building, user, planetResources);
                         break;
 
                     case "liquid":
-
-                        while (planetResources["water"] > 0)
-                        {
-                            user.ResourcesQuantity["water"] += 1;
-                            planetResources["water"] -= 1;
-                            await _clock.Delay(60000);
-                        }
-
+                        await ProcessLiquidResources(user, planetResources);
                         break;
 
                     case "gaseous":
-
-                        while (planetResources["oxygen"] > 0)
-                        {
-                            user.ResourcesQuantity["oxygen"] += 1;
-                            planetResources["oxygen"] -= 1;
-                            await _clock.Delay(60000);
-                        }
-                     
+                        await ProcessGaseousResources(user, planetResources);                   
                         break;
                 }
+            }
+        }
+        private async Task ProcessSolidResources(Building building, UserWithUnits user, Dictionary<string, int> planetResources)
+        {
+            var solidResources = planetResources
+                .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
+                             !kv.Key.Equals("oxygen", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+            string maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+            string minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
+
+            var copy = user?.ResourcesQuantity?[maxKey];
+            var value = planetResources[maxKey];
+
+            if (maxKey == minKey)
+            {
+                await ProcessEqualSolidResources(user, planetResources, maxKey, value, copy);
+            }
+            else
+            {
+                await ProcessDifferentSolidResources(user, planetResources, solidResources, maxKey, minKey);
+            }
+        }
+        private async Task ProcessEqualSolidResources(UserWithUnits user, Dictionary<string, int> planetResources, string maxKey, int value, int? copy)
+        {
+            while (user?.ResourcesQuantity?[maxKey] < value + copy)
+            {
+                user.ResourcesQuantity[maxKey] += 1;
+                planetResources[maxKey] -= 1;
+                await _clock.Delay(60000);
+            }
+        }
+
+        private async Task ProcessDifferentSolidResources(UserWithUnits user, Dictionary<string, int> planetResources, Dictionary<string, int> solidResources, string maxKey, string minKey)
+        {
+            while (planetResources[maxKey] > planetResources[minKey])
+            {
+                user.ResourcesQuantity[maxKey] += 1;
+                planetResources[maxKey] -= 1;
+                maxKey = solidResources.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+                minKey = solidResources.Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
+                await _clock.Delay(60000);
+            }
+
+            while (planetResources[maxKey] > 0 && planetResources[minKey] > 0)
+            {
+                user.ResourcesQuantity[minKey] += 1;
+                planetResources[minKey] -= 1;
+                await _clock.Delay(60000);
+                user.ResourcesQuantity[maxKey] += 1;
+                planetResources[maxKey] -= 1;
+                await _clock.Delay(60000);
+            }
+        }
+
+        private async Task ProcessLiquidResources(UserWithUnits user, Dictionary<string, int> planetResources)
+        {
+            while (planetResources["water"] > 0)
+            {
+                user.ResourcesQuantity["water"] += 1;
+                planetResources["water"] -= 1;
+                await _clock.Delay(60000);
+            }
+        }
+        private async Task ProcessGaseousResources(UserWithUnits user, Dictionary<string, int> planetResources)
+        {
+            while (planetResources["oxygen"] > 0)
+            {
+                user.ResourcesQuantity["oxygen"] += 1;
+                planetResources["oxygen"] -= 1;
+                await _clock.Delay(60000);
             }
         }
     }
