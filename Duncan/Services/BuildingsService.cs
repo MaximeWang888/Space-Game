@@ -130,7 +130,8 @@ namespace Duncan.Services
             {
                 Id = building.Id,
                 BuilderId = building.BuilderId,
-                Type = "mine",
+                Type = building.Type,
+                //Health = building.Health,
                 System = unitFound.System,
                 Planet = unitFound.Planet,
                 IsBuilt = false,

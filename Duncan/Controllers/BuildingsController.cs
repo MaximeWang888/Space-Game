@@ -19,10 +19,10 @@ namespace Duncan.Controllers
 
         public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService)
         {
-            this._unitsRepo = unitsRepo;
-            this._usersRepo = usersRepo;
-            this._clock = clock;
-            this._buildingsService = buildingsService;
+            _unitsRepo = unitsRepo;
+            _usersRepo = usersRepo;
+            _clock = clock;
+            _buildingsService = buildingsService;
         }
 
         [SwaggerOperation(Summary = "Create a building at a location")]
@@ -49,14 +49,14 @@ namespace Duncan.Controllers
             if (unitFound.Id != building.BuilderId)
                 return BadRequest("BuilderId is different than the unitfoundId");
 
-            if (building.Type != "mine")
-                return BadRequest("Type of building is different than mine");
+            //if (building.Type != "mine" && building.Type != "starport")
+            //    return BadRequest("Type of building is different than mine");
 
             if (unitFound.DestinationPlanet != unitFound.Planet)
                 return BadRequest("Builder is not over a planet");
 
             if (!_buildingsService.ValidateResourceCategory(building.ResourceCategory))
-                return BadRequest();
+                return BadRequest("Not valid resource category");
 
             var buildingCreated = _buildingsService.CreateBuilding(building, unitFound);
 

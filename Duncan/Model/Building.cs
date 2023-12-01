@@ -9,8 +9,8 @@ namespace Duncan.Model
         public string? Type { get; set; }
         public string? System { get; set; }
         public string? Planet { get; set; }
-
         public string? BuilderId {  get; set; }
+        //public int? Health {  get; set; }
         public string? ResourceCategory { get; set; }
         public Boolean? IsBuilt { get; set; }
         public DateTime? EstimatedBuildTime { get; set; }

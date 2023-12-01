@@ -1,10 +1,12 @@
 using Duncan.Model;
 using Duncan.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
 {
+    //[Authorize]
     [ApiController]
     [Route("[controller]")]
     public class UsersController : ControllerBase
@@ -16,10 +18,22 @@ namespace Duncan.Controllers
 
         public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
         {
-            this._userDB = userDB;
-            this._map = mapGenerator;
-            this._usersRepo = usersRepo;
+            _userDB = userDB;
+            _map = mapGenerator;
+            _usersRepo = usersRepo;
         }
+
+        //[AllowAnonymous]
+        //[HttpPost("authenticate")]
+        //public async Task<IActionResult> Authenticate([FromBody] AuthenticateModel model)
+        //{
+        //    var user = await _userService.Authenticate(model.Username, model.Password);
+
+        //    if (user == null)
+        //        return BadRequest(new { message = "Username or password is incorrect" });
+
+        //    return Ok(user);
+        //}
 
         [SwaggerOperation(Summary = "Put a specific user")]
         [HttpPut("{id}")]
