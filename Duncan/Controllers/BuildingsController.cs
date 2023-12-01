@@ -46,16 +46,16 @@ namespace Duncan.Controllers
             if (building.BuilderId == null)
                 return BadRequest("Builder'id is null");
 
+            if(building.Type != "mine" && building.Type != "starport")
+                return BadRequest();
+
             if (unitFound.Id != building.BuilderId)
                 return BadRequest("BuilderId is different than the unitfoundId");
-
-            if (building.Type != "mine")
-                return BadRequest("Type of building is different than mine");
 
             if (unitFound.DestinationPlanet != unitFound.Planet)
                 return BadRequest("Builder is not over a planet");
 
-            if (!_buildingsService.ValidateResourceCategory(building.ResourceCategory))
+            if (building.Type == "mine" && !_buildingsService.ValidateResourceCategory(building.ResourceCategory))
                 return BadRequest();
 
             var buildingCreated = _buildingsService.CreateBuilding(building, unitFound);
