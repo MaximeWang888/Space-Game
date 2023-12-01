@@ -64,7 +64,7 @@ namespace Duncan.Controllers
             UserWithUnits userWithUnits = new UserWithUnits();
             userWithUnits.Id = user.Id;
             userWithUnits.Pseudo = user.Pseudo;
-
+            userWithUnits.DateOfCreation = new DateTime();
             userWithUnits.ResourcesQuantity = ResourcesQuantity;
             userWithUnits.Units?.Add(unit_1);
             userWithUnits.Units?.Add(unit_2);
@@ -87,6 +87,7 @@ namespace Duncan.Controllers
             user.Id = userUnit.Id;
             user.Pseudo = userUnit.Pseudo;
             user.ResourcesQuantity = userUnit.ResourcesQuantity;
+            user.DateOfCreation = userUnit.DateOfCreation;
 
             return user;
         }
