@@ -10,7 +10,7 @@ namespace Duncan.Repositories
         {
             this._userDB = userDB;
         }
-        public UserWithUnits? GetUserWithUnitsByUserId(string userId)
+        public User? GetUserWithUnitsByUserId(string userId)
         {
             return _userDB?.users.FirstOrDefault(u => u.Id == userId);
         }
