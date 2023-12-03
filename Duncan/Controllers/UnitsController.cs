@@ -31,7 +31,7 @@ namespace Duncan.Controllers
         [HttpGet("users/{userId}/Units")]
         public ActionResult<List<Unit>> GetAllUnit(string userId)
         {
-            UserWithUnits? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null) 
                 return NotFound("Not Found user");
@@ -45,25 +45,33 @@ namespace Duncan.Controllers
         [HttpPut("users/{userId}/units/{unitId}")]
         public ActionResult<Unit?> MoveUnitById(string userId, string unitId, [FromBody] Unit unit)
         {
-            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
-            if (userWithUnits == null)
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+            if (user == null)
                 return NotFound("Not Found userWithUnits");
 
-            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, userWithUnits);
+            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
 
-            if (unitFound == null)
+            bool isAdmin = HelperAuth.isAdmin(Request);
+            if (unitFound == null && !isAdmin)
                 return NotFound("Not Found unitFound");
+            else if (isAdmin)
+            {
+                user.Units.Add(unit);
+                unit.DestinationPlanet = unit.Planet;
+                unit.DestinationSystem = unit.System;
+                return unit;
+            }
 
             unitFound.DestinationPlanet = unit.DestinationPlanet;
             unitFound.DestinationSystem = unit.DestinationSystem;
             unitFound.task = _unitsService.WaitingUnit(unit, unitFound);
 
-            var building = userWithUnits.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
+            var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
 
             if (building != null && unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet || unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)
             {
                 building.CancellationSource.Cancel();
-                userWithUnits.Buildings.Remove(userWithUnits.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
+                user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
             }
 
             return unitFound;
@@ -73,11 +81,11 @@ namespace Duncan.Controllers
         [HttpGet("users/{userId}/Units/{unitId}")]
         public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
         {
-            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
-            if (userWithUnits == null)
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+            if (user == null)
                 return NotFound("Not Found userWithUnits");
 
-            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, userWithUnits);
+            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
             if (unitFound == null)
                 return NotFound("Not Found unitFound");
 
@@ -90,11 +98,11 @@ namespace Duncan.Controllers
         [HttpGet("users/{userId}/Units/{unitId}/location")]
         public ActionResult<UnitLocation> GetUnitLocation(string userId, string unitId)
         {
-            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
-            if (userWithUnits == null)
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+            if (user == null)
                 return NotFound("Not Found userWithUnits");
 
-            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, userWithUnits);
+            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
             if (unitFound == null)
                 return NotFound("Not Found unitFound");
 

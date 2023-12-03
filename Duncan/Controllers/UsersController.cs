@@ -61,15 +61,22 @@ namespace Duncan.Controllers
                 {"water", 50}
             };
 
-            UserWithUnits userWithUnits = new UserWithUnits();
-            userWithUnits.Id = user.Id;
-            userWithUnits.Pseudo = user.Pseudo;
-            userWithUnits.DateOfCreation = new DateTime();
-            userWithUnits.ResourcesQuantity = ResourcesQuantity;
-            userWithUnits.Units?.Add(unit_1);
-            userWithUnits.Units?.Add(unit_2);
+            if (HelperAuth.isAdmin(Request) && user.ResourcesQuantity is not null)
+            {
+                foreach (var (key, value) in user.ResourcesQuantity)
+                {
+                    ResourcesQuantity[key] = value;
+                }
+            } 
 
-            _userDB?.users.Add(userWithUnits);
+            user.Id = user.Id;
+            user.Pseudo = user.Pseudo;
+            user.DateOfCreation = new DateTime();
+            user.ResourcesQuantity = ResourcesQuantity;
+            user.Units?.Add(unit_1);
+            user.Units?.Add(unit_2);
+
+            _userDB?.users.Add(user);
 
             return user;
         }
@@ -78,7 +85,7 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            UserWithUnits? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
+            User? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
 
             if (userUnit == null)
                 return NotFound();
