@@ -1,5 +1,7 @@
+using Duncan.Model;
+using Duncan.Repositories;
+using Duncan.Services;
 using Microsoft.AspNetCore.Mvc;
-using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Duncan.Controllers
@@ -9,48 +11,55 @@ namespace Duncan.Controllers
     public class SystemsController : ControllerBase
     {
 
-        private readonly MapGeneratorWrapper map;
+        private readonly MapGeneratorWrapper _map;
+        private readonly SystemsService _systemsService;
+        private readonly SystemsRepo _systemsRepo;
+        private readonly PlanetRepo _planetRepo;
 
-        public SystemsController(MapGeneratorWrapper mapGenerator)
+        public SystemsController(MapGeneratorWrapper mapGenerator, SystemsService systemsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
-            this.map = mapGenerator;
+            this._map = mapGenerator;    
+            this._systemsService = systemsService; 
+            this._systemsRepo = systemsRepo;
+            this._planetRepo = planetRepo;
         }
 
         [SwaggerOperation(Summary = "Get all systems")]
         [HttpGet("")]
-        public IReadOnlyList<SystemSpecification> GetAllSystems()
+        public IList<CustomSystem> GetAllSystems()
         {
-            return map.Map.Systems;
+            IList<CustomSystem> CustomSystems = new List<CustomSystem>();
+
+            _systemsService.SystemsTransformation(CustomSystems, _map);
+
+            return CustomSystems;
         }
 
         [SwaggerOperation(Summary = "Get a specific system by its name")]
         [HttpGet("{systemName}")]
-        public SystemSpecification GetSystem(string systemName)
+        public CustomSystem GetSystem(string systemName)
         {
-            IReadOnlyList<SystemSpecification> systems = GetAllSystems();
-            IEnumerable<SystemSpecification> filteredSystem = systems.Where(system => system.Name == systemName);
+            IList<CustomSystem> systems = GetAllSystems();
 
-            return filteredSystem.First();
+            return _systemsRepo.GetSystemByName(systemName, systems);
         }
 
         [SwaggerOperation(Summary = "Get all planets of a specific system")]
         [HttpGet("{systemName}/planets")]
-        public IReadOnlyList<PlanetSpecification> GetAllPlanetsOfSystem(string systemName)
+        public IList<Planet> GetAllPlanetsOfSystem(string systemName)
         {
-            SystemSpecification systemSelected = GetSystem(systemName);
+            CustomSystem systemSelected = GetSystem(systemName);
 
             return systemSelected.Planets;
         }
 
         [SwaggerOperation(Summary = "Get a specific planet of a system")]
         [HttpGet("{systemName}/planets/{planetName}")]
-
-        public PlanetSpecification GetPlanet(string systemName, string planetName)
+        public Planet? GetPlanet(string systemName, string planetName)
         {
-            IReadOnlyList<PlanetSpecification> planetsSelected = GetAllPlanetsOfSystem(systemName);
-            IEnumerable<PlanetSpecification> filteredPlanets = planetsSelected.Where(planet => planet.Name == planetName);
+            IList<Planet> planetsSelected = GetAllPlanetsOfSystem(systemName);
 
-            return filteredPlanets.First();
+            return _planetRepo.GetPlanetByName(planetName, planetsSelected);
         }
     }
 }

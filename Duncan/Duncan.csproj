@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\UsersController - Copier.cs" />
+    <Compile Remove="Model\Class.cs" />
+    <Compile Remove="Model\Class1.cs" />
+    <Compile Remove="Model\Unit - Copier.cs" />
   </ItemGroup>
 
   <ItemGroup>
