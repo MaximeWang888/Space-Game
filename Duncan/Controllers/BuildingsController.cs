@@ -132,7 +132,7 @@ namespace Duncan.Controllers
             if (building == null)
                 return NotFound();
 
-          var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, user); 
+            var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, user); 
 
             switch(queueRequest.Type)
             {
@@ -141,7 +141,17 @@ namespace Duncan.Controllers
                     if (user.ResourcesQuantity["iron"] < 5 || user.ResourcesQuantity["carbon"] < 5)
                         return BadRequest("Not enough resources");
 
+                    if (building.Type == "mine") return BadRequest();
+
+                    if (building.IsBuilt == false) return BadRequest();
+
                     user.ResourcesQuantity["iron"] -= 5;
+                    user.ResourcesQuantity["carbon"] -= 5;
+
+                    return Ok(unitFound);
+
+                case "builder":
+                    user.ResourcesQuantity["iron"] -= 10;
                     user.ResourcesQuantity["carbon"] -= 5;
 
                     return Ok(unitFound);

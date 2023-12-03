@@ -52,8 +52,10 @@ namespace Duncan.Controllers
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
 
             bool isAdmin = HelperAuth.isAdmin(Request);
+
             if (unitFound == null && !isAdmin)
-                return NotFound("Not Found unitFound");
+                return Unauthorized("Unauthorized");
+            
             else if (isAdmin)
             {
                 user.Units.Add(unit);
