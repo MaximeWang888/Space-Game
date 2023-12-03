@@ -18,7 +18,7 @@ builder.Services.AddSingleton<SystemsRepo>();
 builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();
 builder.Services.AddSingleton<BuildingsService>();
-
+builder.Services.AddHostedService<TimedHostedService>();
 
 
 builder.Services.AddControllers();

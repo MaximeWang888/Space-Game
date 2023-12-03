@@ -1,10 +1,12 @@
-﻿using Duncan.Model;
+﻿using Duncan.Helper;
+using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Runtime.InteropServices;
 
 namespace Duncan.Controllers
 {
@@ -19,12 +21,12 @@ namespace Duncan.Controllers
 
         public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
-            this._map = mapGenerator;
-            this._unitsRepo = unitsRepo;
-            this._usersRepo = usersRepo;
-            this._systemsRepo = systemsRepo;
-            this._planetRepo = planetRepo;
-            this._unitsService = unitsService;
+            _map = mapGenerator;
+            _unitsRepo = unitsRepo;
+            _usersRepo = usersRepo;
+            _systemsRepo = systemsRepo;
+            _planetRepo = planetRepo;
+            _unitsService = unitsService;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
@@ -43,7 +45,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Move Unit By Id")]
         [HttpPut("users/{userId}/units/{unitId}")]
-        public ActionResult<Unit?> MoveUnitById(string userId, string unitId, [FromBody] Unit unit)
+        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unit)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
             if (user == null)
@@ -52,23 +54,33 @@ namespace Duncan.Controllers
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
 
             bool isAdmin = HelperAuth.isAdmin(Request);
+
             if (unitFound == null && !isAdmin)
-                return NotFound("Not Found unitFound");
+                return Unauthorized("Unauthorized");
             else if (isAdmin)
             {
                 user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
+                unit.Health = unit.Type switch
+                {
+                    "bomber" => 50,
+                    "fighter" => 80,
+                    "cruiser" => 400,
+                    _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
+                };
                 return unit;
             }
 
             unitFound.DestinationPlanet = unit.DestinationPlanet;
             unitFound.DestinationSystem = unit.DestinationSystem;
-            unitFound.task = _unitsService.WaitingUnit(unit, unitFound);
+            unitFound.Task = _unitsService.WaitingUnit(unit, unitFound);
 
             var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
 
-            if (building != null && unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet || unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)
+            if (building != null &&
+                ((unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet) ||
+                 (unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)))
             {
                 building.CancellationSource.Cancel();
                 user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));

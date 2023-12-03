@@ -17,14 +17,16 @@ namespace Duncan.Controllers
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
         private readonly BuildingsService _buildingsService;
+        private readonly MapGeneratorWrapper _map;
         private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService, MapGeneratorWrapper map)
         {
-            this._unitsRepo = unitsRepo;
-            this._usersRepo = usersRepo;
-            this._clock = clock;
-            this._buildingsService = buildingsService;
+            _unitsRepo = unitsRepo;
+            _usersRepo = usersRepo;
+            _clock = clock;
+            _buildingsService = buildingsService;
+            _map = map;
         }
 
         [SwaggerOperation(Summary = "Create a building at a location")]
@@ -120,29 +122,42 @@ namespace Duncan.Controllers
             return Ok(building);
         }
         [HttpPost("/users/{userId}/buildings/{starportId}/queue")]
-        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody queueRequest)
+        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody? queueRequest)
         {
-            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
-            if (userWithUnits == null)
+            if (user == null)
                 return NotFound();
 
-            var building = userWithUnits?.Buildings?.FirstOrDefault(b => b.Id == starportId);
+            var building = user?.Buildings?.FirstOrDefault(b => b.Id == starportId);
 
             if (building == null)
                 return NotFound();
 
-          var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, userWithUnits); 
+            var system = _map.Map.Systems.First().Name;
+            var planet = _map.Map.Systems.First().Planets.First().Name;
 
-            switch(queueRequest.Type)
+            var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, system, planet);
+
+            switch (queueRequest.Type)
             {
                 case "scout":
 
-                    if (userWithUnits.ResourcesQuantity["iron"] < 5 || userWithUnits.ResourcesQuantity["carbon"] < 5)
+                    if (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5)
                         return BadRequest("Not enough resources");
 
-                    userWithUnits.ResourcesQuantity["iron"] -= 5;
-                    userWithUnits.ResourcesQuantity["carbon"] -= 5;
+                    if (building.Type == "mine") return BadRequest();
+
+                    if (building.IsBuilt == false) return BadRequest();
+
+                    user.ResourcesQuantity["iron"] -= 5;
+                    user.ResourcesQuantity["carbon"] -= 5;
+
+                    return Ok(unitFound);
+
+                case "builder":
+                    user.ResourcesQuantity["iron"] -= 10;
+                    user.ResourcesQuantity["carbon"] -= 5;
 
                     return Ok(unitFound);
             }

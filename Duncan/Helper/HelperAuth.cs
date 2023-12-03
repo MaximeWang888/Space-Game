@@ -2,7 +2,7 @@
 
 using System.Text;
 
-namespace Duncan.Controllers
+namespace Duncan.Helper
 {
     public class HelperAuth
     {

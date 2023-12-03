@@ -12,15 +12,15 @@ namespace Duncan.Services
         private readonly PlanetRepo _planetRepo;
         public BuildingsService(MapGeneratorWrapper mapGenerator, IClock clock, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
-            this._map = mapGenerator; 
-            this._systemsRepo = systemsRepo;
-            this._planetRepo = planetRepo;
-            this._clock = clock;
+            _map = mapGenerator; 
+            _systemsRepo = systemsRepo;
+            _planetRepo = planetRepo;
+            _clock = clock;
         }
         public async Task ProcessBuild(Building building)
         {
             building.CancellationSource = new CancellationTokenSource();
-            await _clock.Delay(300000, building.CancellationSource.Token); //5 minutes
+            await _clock.Delay(300_000, building.CancellationSource.Token); //5 minutes
             building.IsBuilt = true;
             building.EstimatedBuildTime = null;
         }
@@ -145,10 +145,10 @@ namespace Duncan.Services
             return resourceKinds.Contains(resourceCategory);
         }
 
-        public void RunTasksOnBuilding(Building building, User userWithUnits)
+        public void RunTasksOnBuilding(Building building, User user)
         {
             building.Task = ProcessBuild(building);
-            building.TaskTwo = ProcessExtract(building, userWithUnits, building.ResourceCategory);
+            building.TaskTwo = ProcessExtract(building, user, building.ResourceCategory);
         }
     }
 }

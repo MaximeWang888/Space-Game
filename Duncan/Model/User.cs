@@ -10,6 +10,8 @@ namespace Duncan.Model
 
         [JsonIgnore]
         public List<Unit>? Units { get; set; } = new List<Unit>();
+        [JsonIgnore]
+        public List<Unit>? FightingUnits { get; set; } = new List<Unit>{};
         public List<Building>? Buildings { get; set; } = new List<Building>();
         public IDictionary<string, int>? ResourcesQuantity { get; set; }
     }

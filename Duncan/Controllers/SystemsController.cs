@@ -18,10 +18,10 @@ namespace Duncan.Controllers
 
         public SystemsController(MapGeneratorWrapper mapGenerator, SystemsService systemsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
-            this._map = mapGenerator;    
-            this._systemsService = systemsService; 
-            this._systemsRepo = systemsRepo;
-            this._planetRepo = planetRepo;
+            _map = mapGenerator;    
+            _systemsService = systemsService; 
+            _systemsRepo = systemsRepo;
+            _planetRepo = planetRepo;
         }
 
         [SwaggerOperation(Summary = "Get all systems")]
