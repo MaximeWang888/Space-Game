@@ -1,8 +1,10 @@
+using System.Text;
 using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Any;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -113,6 +115,36 @@ namespace Duncan.Controllers
                 {
                     building.IsBuilt = false;
                 }
+            }
+
+            return Ok(building);
+        }
+        [HttpPost("/users/{userId}/buildings/{starportId}/queue")]
+        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody queueRequest)
+        {
+            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
+
+            if (userWithUnits == null)
+                return NotFound();
+
+            var building = userWithUnits?.Buildings?.FirstOrDefault(b => b.Id == starportId);
+
+            if (building == null)
+                return NotFound();
+
+          var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, userWithUnits); 
+
+            switch(queueRequest.Type)
+            {
+                case "scout":
+
+                    if (userWithUnits.ResourcesQuantity["iron"] < 5 || userWithUnits.ResourcesQuantity["carbon"] < 5)
+                        return BadRequest("Not enough resources");
+
+                    userWithUnits.ResourcesQuantity["iron"] -= 5;
+                    userWithUnits.ResourcesQuantity["carbon"] -= 5;
+
+                    return Ok(unitFound);
             }
 
             return Ok(building);
