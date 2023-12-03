@@ -122,27 +122,27 @@ namespace Duncan.Controllers
         [HttpPost("/users/{userId}/buildings/{starportId}/queue")]
         public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody queueRequest)
         {
-            UserWithUnits? userWithUnits = _usersRepo.GetUserWithUnitsByUserId(userId);
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
-            if (userWithUnits == null)
+            if (user == null)
                 return NotFound();
 
-            var building = userWithUnits?.Buildings?.FirstOrDefault(b => b.Id == starportId);
+            var building = user?.Buildings?.FirstOrDefault(b => b.Id == starportId);
 
             if (building == null)
                 return NotFound();
 
-          var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, userWithUnits); 
+          var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, user); 
 
             switch(queueRequest.Type)
             {
                 case "scout":
 
-                    if (userWithUnits.ResourcesQuantity["iron"] < 5 || userWithUnits.ResourcesQuantity["carbon"] < 5)
+                    if (user.ResourcesQuantity["iron"] < 5 || user.ResourcesQuantity["carbon"] < 5)
                         return BadRequest("Not enough resources");
 
-                    userWithUnits.ResourcesQuantity["iron"] -= 5;
-                    userWithUnits.ResourcesQuantity["carbon"] -= 5;
+                    user.ResourcesQuantity["iron"] -= 5;
+                    user.ResourcesQuantity["carbon"] -= 5;
 
                     return Ok(unitFound);
             }
