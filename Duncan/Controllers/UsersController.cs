@@ -48,7 +48,8 @@ namespace Duncan.Controllers
                 Planet = _map.Map.Systems.First().Planets.First().Name,
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
-                Type = "scout"
+                Type = "scout",
+                Health = 50
             };
 
             Unit unit_2 = new Unit
@@ -57,6 +58,7 @@ namespace Duncan.Controllers
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "builder",
+                Health = 50
             };
 
             var ResourcesQuantity = new Dictionary<string, int>

@@ -4,13 +4,18 @@ namespace Duncan.Utils
 {
     public class UnitsRepo
     {
-        public Unit? GetUnitByUnitId(string unitId, User userWithUnits)
+        public Unit? GetUnitByUnitId(string unitId, User user)
         {
-            return userWithUnits.Units?.FirstOrDefault(u => u.Id == unitId);
+            return user.Units?.FirstOrDefault(u => u.Id == unitId);
         }
-        public Unit? GetUnitWithType(string type, User userWithUnits)
+        public Unit? GetUnitWithType(string type, User user)
         {
-            return userWithUnits.Units?.FirstOrDefault(u => u.Type == type);
+            return user.Units?.FirstOrDefault(u => u.Type == type);
         }
+        //public void DeleteUnit(Unit unit, User user)
+        //{
+        //    user.Units?.Remove(unit);
+        //}
+
     }
 }

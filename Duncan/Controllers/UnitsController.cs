@@ -16,6 +16,7 @@ namespace Duncan.Controllers
         private readonly SystemsRepo _systemsRepo;
         private readonly PlanetRepo _planetRepo;
         private readonly UnitsService _unitsService;
+        // private readonly IClock _clock;
 
         public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
@@ -40,6 +41,12 @@ namespace Duncan.Controllers
 
             return units;
         }
+        //public async Task DeleteUnitsAfterDelay(Unit unit, User user, int delayInSeconds)
+        //{
+        //    await _clock.Delay(delayInSeconds);
+
+        //    _unitsRepo.DeleteUnit(unit, user);
+        //}
 
         [SwaggerOperation(Summary = "Move Unit By Id")]
         [HttpPut("users/{userId}/units/{unitId}")]
@@ -55,12 +62,13 @@ namespace Duncan.Controllers
 
             if (unitFound == null && !isAdmin)
                 return Unauthorized("Unauthorized");
-            
             else if (isAdmin)
             {
                 user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
+                unit.Health = unit.Type.Equals("bomber") ? 50 : 0;
+                // await DeleteUnitsAfterDelay(unit, user, 60000);
                 return unit;
             }
 

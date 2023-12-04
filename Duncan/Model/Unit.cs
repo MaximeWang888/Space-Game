@@ -11,6 +11,7 @@ namespace Duncan.Model
         public string? DestinationSystem { get; set; }
         public string? DestinationPlanet { get; set; }
         public DateTime? EstimatedTimeOfArrival { get; set; }
+        public int? Health { get; set; }
 
         [JsonIgnore]
         public Task? task { get; set; }
