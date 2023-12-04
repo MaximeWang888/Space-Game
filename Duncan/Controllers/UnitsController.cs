@@ -67,7 +67,22 @@ namespace Duncan.Controllers
                 user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
-                unit.Health = unit.Type.Equals("bomber") ? 50 : 0;
+                switch (unit.Type)
+                {
+                    case "bomber":
+                        unit.Health = 50;
+                        break;
+                    case "fighter":
+                        unit.Health = 80;
+                        break;
+                    case "cruiser":
+                        unit.Health = 400;
+                        break;
+                    //default:
+                    //    unit.Health = 0; 
+                    //    break;
+                }
+                //_unitsService.RunTaskOnUnit(unit, user);
                 // await DeleteUnitsAfterDelay(unit, user, 60000);
                 return unit;
             }
