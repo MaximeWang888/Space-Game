@@ -34,6 +34,15 @@ namespace Duncan.Controllers
             if (user.Id != id)
                 return BadRequest("Inconsistent user ID");
 
+            var existingUser = _userDB?.users.FirstOrDefault(u => u.Id == id);
+
+            if (existingUser != null && HelperAuth.isAdmin(Request))
+            {
+                existingUser.ResourcesQuantity = user.ResourcesQuantity;
+
+                return Ok(existingUser); 
+            }
+
             Unit unit_1 = new Unit
             {
                 Planet = _map.Map.Systems.First().Planets.First().Name,
@@ -61,7 +70,7 @@ namespace Duncan.Controllers
                 {"water", 50}
             };
 
-            if (HelperAuth.isAdmin(Request) && user.ResourcesQuantity is not null)
+            if (HelperAuth.isAdmin(Request))
             {
                 foreach (var (key, value) in user.ResourcesQuantity)
                 {
