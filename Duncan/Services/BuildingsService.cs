@@ -145,10 +145,10 @@ namespace Duncan.Services
             return resourceKinds.Contains(resourceCategory);
         }
 
-        public void RunTasksOnBuilding(Building building, User userWithUnits)
+        public void RunTasksOnBuilding(Building building, User user)
         {
             building.Task = ProcessBuild(building);
-            building.TaskTwo = ProcessExtract(building, userWithUnits, building.ResourceCategory);
+            building.TaskTwo = ProcessExtract(building, user, building.ResourceCategory);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Move Unit By Id")]
         [HttpPut("users/{userId}/units/{unitId}")]
-        public ActionResult<Unit?> MoveUnitById(string userId, string unitId, [FromBody] Unit unit)
+        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unit)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
             if (user == null)
@@ -78,11 +78,9 @@ namespace Duncan.Controllers
                     case "cruiser":
                         unit.Health = 400;
                         break;
-                    //default:
-                    //    unit.Health = 0; 
-                    //    break;
                 }
-                //_unitsService.RunTaskOnUnit(unit, user);
+                _unitsService.RunTaskOnUnit(unit, user);
+
                 // await DeleteUnitsAfterDelay(unit, user, 60000);
                 return unit;
             }
