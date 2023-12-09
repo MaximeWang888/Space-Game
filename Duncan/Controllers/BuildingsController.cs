@@ -17,14 +17,16 @@ namespace Duncan.Controllers
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
         private readonly BuildingsService _buildingsService;
+        private readonly MapGeneratorWrapper _map;
         private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService, MapGeneratorWrapper map)
         {
-            this._unitsRepo = unitsRepo;
-            this._usersRepo = usersRepo;
-            this._clock = clock;
-            this._buildingsService = buildingsService;
+            _unitsRepo = unitsRepo;
+            _usersRepo = usersRepo;
+            _clock = clock;
+            _buildingsService = buildingsService;
+            _map = map;
         }
 
         [SwaggerOperation(Summary = "Create a building at a location")]
@@ -132,9 +134,12 @@ namespace Duncan.Controllers
             if (building == null)
                 return NotFound();
 
-            var unitFound = _unitsRepo.GetUnitWithType(queueRequest.Type, user); 
+            var s = _map.Map.Systems.First().Name;
+            var p = _map.Map.Systems.First().Planets.First().Name;
 
-            switch(queueRequest.Type)
+            var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, s, p);
+
+            switch (queueRequest.Type)
             {
                 case "scout":
 

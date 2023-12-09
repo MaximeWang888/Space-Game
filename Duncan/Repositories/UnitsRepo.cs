@@ -12,6 +12,36 @@ namespace Duncan.Utils
         {
             return user.Units?.FirstOrDefault(u => u.Type == type);
         }
+
+        public Unit? CreateUnitWithType(string type, string system, string planet)
+        {
+            Unit unit = new Unit
+            {
+                Planet = planet,
+                System = system,
+                DestinationSystem = system,
+                Type = type,
+                Health = GetHealthByType(type)
+            };
+            return unit;
+        }
+
+        private static int GetHealthByType(string type)
+        {
+            switch (type)
+            {
+                case "bomber":
+                    return 50;
+                case "fighter":
+                    return 80;
+                case "cruiser":
+                    return 400;
+                default:
+                    return 0;
+            }
+        }
+
+
         //public void DeleteUnit(Unit unit, User user)
         //{
         //    user.Units?.Remove(unit);

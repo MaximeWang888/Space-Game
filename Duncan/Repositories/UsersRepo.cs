@@ -8,11 +8,16 @@ namespace Duncan.Repositories
 
         public UsersRepo(UserDB userDB)
         {
-            this._userDB = userDB;
+            _userDB = userDB;
         }
         public User? GetUserWithUnitsByUserId(string userId)
         {
             return _userDB?.users.FirstOrDefault(u => u.Id == userId);
+        }
+
+        internal List<User>? GetUsers()
+        {
+            return _userDB?.users; 
         }
     }
 }

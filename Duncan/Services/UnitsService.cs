@@ -1,4 +1,5 @@
 ﻿using Duncan.Model;
+using Duncan.Repositories;
 using Shard.Shared.Core;
 
 namespace Duncan.Services
@@ -7,10 +8,14 @@ namespace Duncan.Services
     {
         private readonly IClock _clock;
         private readonly List<Unit> _units;
-        public UnitsService(IClock clock)
+        private static User globalUser = new User();
+        private readonly UsersRepo _usersRepo;
+
+        public UnitsService(IClock clock, UsersRepo usersRepo)
         {
             _clock = clock;
             clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.Zero, TimeSpan.FromSeconds(6));
+            _usersRepo = usersRepo;
         }
 
         private void LaunchAllUnitsFight()
@@ -50,6 +55,7 @@ namespace Duncan.Services
                 "fighter" => new List<string> { "bomber", "fighter", "cruiser" },
                 "cruiser" => new List<string> { "fighter", "bomber", "cruiser" },
             };
+
 
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
         {
@@ -98,5 +104,40 @@ namespace Duncan.Services
                     unit.Planet = null;
             }
         }
-    } 
+
+
+        public void RunTaskOnUnit(Unit unit, User user)
+        {
+            //unit.task = ProcessAttack(unit, user);
+        }
+
+        public async Task ProcessAttack(Unit unit, User user)
+        {
+
+            //globalUser.FightingUnits?.Add(unit);
+            //if (globalUser.FightingUnits?.Count == 2 ) {
+            //await _clock.Delay(6_000); // 6 secondes
+
+            //foreach (Unit userUnit in user.Units)
+            //{
+
+
+            //globalUser.FightingUnits = null;
+            //}
+            //unit.Health = 0;
+        }
+        private List<string>? GetPriority(string type) => type switch
+        {
+            "Starport" => new List<string> { "Starport", "Mine", "Farm" }, // 
+            "Building" => new List<string> { "Starport", "Mine", "Farm" },
+            "Testing" => new List<string> { "Starport", "Mine", "Farm" },
+            _ => null
+        };
+
+        private List<Unit>? GetAllUnits()
+        {
+            List<User> users = _usersRepo.GetUsers();
+            return users?.SelectMany(u => u.Units).ToList();
+        }
+    }
 }

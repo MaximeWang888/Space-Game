@@ -64,7 +64,6 @@ namespace Duncan.Controllers
                 return Unauthorized("Unauthorized");
             else if (isAdmin)
             {
-                user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
                 switch (unit.Type)
@@ -79,6 +78,11 @@ namespace Duncan.Controllers
                         unit.Health = 400;
                         break;
                 }
+                user.Units.Add(unit);
+                //_unitsService.RunTaskOnUnit(unit, user);
+                //_unitsService.RunTaskOnUnit(unit1, unit2);
+
+                // await DeleteUnitsAfterDelay(unit, user, 60000);
                 return unit;
             }
 
