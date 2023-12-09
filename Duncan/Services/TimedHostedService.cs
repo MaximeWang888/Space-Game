@@ -3,9 +3,9 @@ using Duncan.Services;
 
 public class TimedHostedService : IHostedService, IDisposable
 {
-    private ITimer? _timer = null;
-    private IClock _clock;
-    private UnitsService _unitsService;
+    private readonly ITimer? _timer = null;
+    private readonly IClock _clock;
+    private readonly UnitsService _unitsService;
 
     public TimedHostedService(IClock clock, UnitsService unitsService)
     {

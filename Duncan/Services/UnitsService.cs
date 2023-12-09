@@ -16,7 +16,6 @@ namespace Duncan.Services
             _usersRepo = usersRepo;
             _units = GetAllUnits();
         }
-
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
         {
             currentUnit.DestinationPlanet = unitToMove.DestinationPlanet;
@@ -43,56 +42,6 @@ namespace Duncan.Services
             }
         }
 
-        public void LaunchAllUnitsFight()
-        {
-            _units = GetAllUnits();
-            foreach (Unit unit in _units)
-            {
-                if (IsCombatUnit(unit.Type))
-                {
-                    ProcessAttackBis(unit);
-                }
-            };
-
-            foreach (Unit unit in _units)
-            {
-                if (unit.Health <= 0)
-                    _usersRepo.GetUserWithUnitId(unit.Id).Units.Remove(unit);
-            };
-        }
-
-        private void ProcessAttackBis(Unit unitThatAttack)
-        { 
-            User userOwner = _usersRepo.GetUserWithUnitId(unitThatAttack.Id);
-            List<Unit> enemies = GetEnemy(userOwner); // User different de warunit;
-            List<Unit> enemiesAtSameLocation = GetEnemiesAtSameLocation(enemies, userOwner);
-            List<Unit> enemiesOrderedByPriorityThenByHealth = GetPriorityByTypeThenByHealth(unitThatAttack.Type)
-                ?.SelectMany(priorityList => enemiesAtSameLocation.Where(unit => priorityList.Contains(unit.Type)))
-                .ToList();
-            Unit targetUnit = enemiesOrderedByPriorityThenByHealth.FirstOrDefault();
-            if (targetUnit is null) return;
-            targetUnit.Health -= GetUnitDamage(unitThatAttack.Type, targetUnit.Type);
-        }
-        private List<Unit> GetEnemiesAtSameLocation(List<Unit> enemies, User userOwner)
-        {
-            return enemies
-            .Where(unitEnemie =>
-                userOwner.Units.Any(unit =>
-                    (unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System)) ||
-                    (!unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System))
-                )
-            )
-            .ToList();
-        }
-        private List<Unit> GetEnemy(User userOwner)
-        {
-            return _units
-                .Where(unit => !userOwner.Units.Any(userUnit => userUnit.Equals(unit)))
-                .Where(unit => unit.Type != "scout" && unit.Type != "builder")
-                .ToList();
-        }
-
-
         private async Task Waiting(Unit currentUnit, int time)
         {
             currentUnit.EstimatedTimeOfArrival = _clock.Now.AddSeconds(time);
@@ -107,28 +56,81 @@ namespace Duncan.Services
 
                 if (timeOfArrival <= 2)
                 {
-                    if (unit.task != null)
-                        await unit.task;
+                    if (unit.Task != null)
+                        await unit.Task;
                 }
                 else
                     unit.Planet = null;
             }
         }
 
-        private List<Unit>? GetAllUnits()
+        public void LaunchAllUnitsFight()
         {
-            List<User> users = _usersRepo.GetUsers();
-            return users?.SelectMany(u => u.Units).ToList();
+            _units = GetAllUnits();
+            foreach (Unit unit in _units)
+            {
+                if (IsCombatUnit(unit.Type))
+                {
+                    ProcessAttackBis(unit);
+                }
+            };
+
+            foreach (Unit unit in _units)
+            {
+                if (unit.Health <= 0)
+                    _usersRepo?.GetUserWithUnitId(unit.Id)?.Units?.Remove(unit);
+            };
         }
-        private List<string>? GetPriorityByTypeThenByHealth(string type) => type switch
+
+        private void ProcessAttackBis(Unit unitThatAttack)
+        { 
+            User? userOwner = _usersRepo.GetUserWithUnitId(unitThatAttack.Id);
+            List<Unit> enemies = userOwner is not null ? GetEnemies(userOwner) : new List<Unit>() ;
+            List<Unit> enemiesAtSameLocation = GetEnemiesAtSameLocation(enemies, userOwner);
+            List<Unit>? enemiesOrderedByPriorityThenByHealth = GetPriorityByTypeThenByHealth(unitThatAttack.Type)
+                ?.SelectMany(priorityList => enemiesAtSameLocation.Where(unit => priorityList.Contains(unit.Type)))
+                .ToList();
+            Unit? targetUnit = enemiesOrderedByPriorityThenByHealth?.FirstOrDefault();
+
+            if (targetUnit is null) return;
+
+            targetUnit.Health -= GetUnitDamage(unitThatAttack.Type, targetUnit.Type);
+        }
+        private static List<Unit> GetEnemiesAtSameLocation(List<Unit> enemies, User userOwner)
+        {
+            return enemies
+            .Where(unitEnemie =>
+                userOwner.Units.Any(unit =>
+                    (unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System)) ||
+                    (!unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System))
+                )
+            )
+            .ToList();
+        }
+        private List<Unit> GetEnemies(User userOwner)
+        {
+            return _units
+                .Where(unit => userOwner.Units is not null && !userOwner.Units.Any(userUnit => userUnit.Equals(unit)))
+                .Where(unit => unit.Type != "scout" && unit.Type != "builder")
+                .ToList();
+        }
+        private List<Unit> GetAllUnits()
+        {
+            List<User>? users = _usersRepo.GetUsers();
+
+            return (users ?? new List<User>())
+                .Where(u => u.Units != null) 
+                .SelectMany(u => u.Units ?? Enumerable.Empty<Unit>())
+                .ToList();
+        }
+        private static List<string>? GetPriorityByTypeThenByHealth(string type) => type switch
         {
             "bomber" => new List<string> { "cruiser", "bomber", "fighter" },
             "fighter" => new List<string> { "bomber", "fighter", "cruiser" },
             "cruiser" => new List<string> { "fighter", "cruiser", "bomber" },
-            "builder" => new List<string> { },
-            "scout" => new List<string> { },
+            _ => null
         };
-        private bool IsCombatUnit(string unitType)
+        private static bool IsCombatUnit(string unitType)
         {
             return unitType == "cruiser" || unitType == "bomber" || unitType == "fighter";
         }
@@ -150,8 +152,5 @@ namespace Duncan.Services
                 _ => null
             };
         }
-
-
-
     }
 }

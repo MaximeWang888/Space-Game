@@ -122,7 +122,7 @@ namespace Duncan.Controllers
             return Ok(building);
         }
         [HttpPost("/users/{userId}/buildings/{starportId}/queue")]
-        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody queueRequest)
+        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -134,16 +134,16 @@ namespace Duncan.Controllers
             if (building == null)
                 return NotFound();
 
-            var s = _map.Map.Systems.First().Name;
-            var p = _map.Map.Systems.First().Planets.First().Name;
+            var system = _map.Map.Systems.First().Name;
+            var planet = _map.Map.Systems.First().Planets.First().Name;
 
-            var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, s, p);
+            var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, system, planet);
 
             switch (queueRequest.Type)
             {
                 case "scout":
 
-                    if (user.ResourcesQuantity["iron"] < 5 || user.ResourcesQuantity["carbon"] < 5)
+                    if (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5)
                         return BadRequest("Not enough resources");
 
                     if (building.Type == "mine") return BadRequest();

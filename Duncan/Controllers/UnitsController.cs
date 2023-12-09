@@ -43,12 +43,6 @@ namespace Duncan.Controllers
 
             return units;
         }
-        //public async Task DeleteUnitsAfterDelay(Unit unit, User user, int delayInSeconds)
-        //{
-        //    await _clock.Delay(delayInSeconds);
-
-        //    _unitsRepo.DeleteUnit(unit, user);
-        //}
 
         [SwaggerOperation(Summary = "Move Unit By Id")]
         [HttpPut("users/{userId}/units/{unitId}")]
@@ -86,7 +80,7 @@ namespace Duncan.Controllers
 
             unitFound.DestinationPlanet = unit.DestinationPlanet;
             unitFound.DestinationSystem = unit.DestinationSystem;
-            unitFound.task = _unitsService.WaitingUnit(unit, unitFound);
+            unitFound.Task = _unitsService.WaitingUnit(unit, unitFound);
 
             var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
 

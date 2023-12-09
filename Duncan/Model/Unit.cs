@@ -14,10 +14,7 @@ namespace Duncan.Model
         public int? Health { get; set; }
 
         [JsonIgnore]
-        public Task? task { get; set; }
-
-        [JsonIgnore]
-        public int? Attack { get; internal set; }
+        public Task? Task { get; set; }
 
         public Unit()
         {
