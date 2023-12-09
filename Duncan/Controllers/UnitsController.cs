@@ -79,9 +79,6 @@ namespace Duncan.Controllers
                         unit.Health = 400;
                         break;
                 }
-                _unitsService.RunTaskOnUnit(unit, user);
-
-                // await DeleteUnitsAfterDelay(unit, user, 60000);
                 return unit;
             }
 

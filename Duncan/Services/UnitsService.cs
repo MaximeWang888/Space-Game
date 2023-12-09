@@ -6,10 +6,50 @@ namespace Duncan.Services
     public class UnitsService
     {
         private readonly IClock _clock;
-        private static User globalUser = new User();
-        public UnitsService(IClock clock) {
-            this._clock = clock;
+        private readonly List<Unit> _units;
+        public UnitsService(IClock clock)
+        {
+            _clock = clock;
+            clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.Zero, TimeSpan.FromSeconds(6));
         }
+
+        private void LaunchAllUnitsFight()
+        {
+            foreach (var unit in _units)
+            {
+                ProcessAttackBis(unit);
+            };
+        }
+
+        private void ProcessAttackBis(Unit unitThatAttack)
+        {
+            var unitTypePriority = GetNextTargetsType(unitThatAttack);
+            var unitsAround = _units.Where(unit => unitThatAttack.Planet == unit.Planet && unitThatAttack.System == unit.System);
+            // ajouter une cond qui vérifie que les vaisseau de la liste unitsAround n'appartient pas à l'user
+            var firstTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[0]);
+            var secondTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[1]);
+            var thirdTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[2]);
+            var rightTarget = firstTarget.Count() != 0 ? firstTarget : secondTarget.Count() != 0 ? secondTarget : thirdTarget;
+            var orderedRightTarget = rightTarget.OrderBy(unit => unit.Health); // jsplu si c'est ascending ou descending
+            var unitToAttack = orderedRightTarget.FirstOrDefault();
+            unitToAttack.Health -= GetUnitDamage(unitThatAttack, unitToAttack.Type);
+        }
+
+        private int? GetUnitDamage(Unit unitThatAttack, string? type)
+       => type switch
+       {
+           "bomber" => 10,
+           "fighter" => 20,
+           "cruiser" => 30
+       };
+
+        private List<string> GetNextTargetsType(Unit unit)
+            => unit.Type switch
+            {
+                "bomber" => new List<string> { "cruiser", "bomber", "fighter" },
+                "fighter" => new List<string> { "bomber", "fighter", "cruiser" },
+                "cruiser" => new List<string> { "fighter", "bomber", "cruiser" },
+            };
 
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
         {
@@ -58,67 +98,5 @@ namespace Duncan.Services
                     unit.Planet = null;
             }
         }
-
-        public void RunTaskOnUnit(Unit unit, User user)
-        {
-            unit.task = ProcessAttack(unit, user);
-        }
-
-        public async Task ProcessAttack(Unit unit, User user)
-        {
-            globalUser.FightingUnits?.Add(unit);
-            if (globalUser.FightingUnits?.Count == 2 ) {
-                await _clock.Delay(6_000); // 6 secondes
-
-                Unit unit1 = globalUser.FightingUnits[0];
-                Unit unit2 = globalUser.FightingUnits[1];
-
-                switch (unit1.Type)
-                {
-                    case "bomber":
-                        switch (unit2.Type)
-                        {
-                            case "bomber":
-                                break;
-                            case "fighter":
-                                break;
-                            case "cruiser":
-                                break;
-                        }
-                        break;
-                    case "fighter":
-                        switch (unit2.Type)
-                        {
-                            case "bomber":
-                                unit1.Health -= 10;
-                                break;
-                            case "fighter":
-                                unit1.Health -= 70;
-                                unit2.Health -= 70;
-                                break;
-                            case "cruiser":
-                                unit1.Health -= 10;
-                                break;
-                        }
-                        break;
-                    case "cruiser":
-                        switch (unit2.Type)
-                        {
-                            case "bomber":
-                                unit1.Health -= 4;
-                                break;
-                            case "fighter":
-                                unit1.Health -= 40;
-                                break;
-                            case "cruiser":
-                                break;
-                        }
-                        break;
-                }
-
-                globalUser.FightingUnits = null;
-            }
-            //unit.Health = 0;
-        }
-    }
+    } 
 }

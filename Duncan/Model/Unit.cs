@@ -16,6 +16,9 @@ namespace Duncan.Model
         [JsonIgnore]
         public Task? task { get; set; }
 
+        [JsonIgnore]
+        public int? Attack { get; internal set; }
+
         public Unit()
         {
             this.Id = Guid.NewGuid().ToString();
