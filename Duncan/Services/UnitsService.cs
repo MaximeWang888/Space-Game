@@ -15,7 +15,6 @@ namespace Duncan.Services
             _clock = clock;
             _usersRepo = usersRepo;
             _units = GetAllUnits();
-            clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
         }
 
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
@@ -44,6 +43,10 @@ namespace Duncan.Services
             }
         }
 
+        public void LaunchTimer()
+        {
+            _clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        }
         private void LaunchAllUnitsFight()
         {
             foreach (var unit in _units)
