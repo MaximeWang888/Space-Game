@@ -5,6 +5,7 @@ using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Runtime.InteropServices;
 
 namespace Duncan.Controllers
 {
@@ -16,9 +17,9 @@ namespace Duncan.Controllers
         private readonly SystemsRepo _systemsRepo;
         private readonly PlanetRepo _planetRepo;
         private readonly UnitsService _unitsService;
-        // private readonly IClock _clock;
+        private readonly IClock _clock;
 
-        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
+        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo, IClock clock)
         {
             this._map = mapGenerator;
             this._unitsRepo = unitsRepo;
@@ -26,6 +27,7 @@ namespace Duncan.Controllers
             this._systemsRepo = systemsRepo;
             this._planetRepo = planetRepo;
             this._unitsService = unitsService;
+            _clock = clock;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
@@ -64,6 +66,7 @@ namespace Duncan.Controllers
                 return Unauthorized("Unauthorized");
             else if (isAdmin)
             {
+                user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
                 switch (unit.Type)
@@ -78,11 +81,7 @@ namespace Duncan.Controllers
                         unit.Health = 400;
                         break;
                 }
-                user.Units.Add(unit);
-                //_unitsService.RunTaskOnUnit(unit, user);
-                //_unitsService.RunTaskOnUnit(unit1, unit2);
-
-                // await DeleteUnitsAfterDelay(unit, user, 60000);
+                new UnitsService(_clock, _usersRepo);
                 return unit;
             }
 

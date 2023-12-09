@@ -19,6 +19,11 @@ namespace Duncan.Repositories
         {
             return _userDB?.users; 
         }
+        internal User? GetUserWithUnitId(string unitId)
+        {
+            return _userDB?.users.FirstOrDefault(user => user.Units.Any(unit => unit.Id == unitId));
+        }
+
     }
 }
 
