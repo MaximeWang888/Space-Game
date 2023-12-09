@@ -7,7 +7,7 @@ namespace Duncan.Services
     public class UnitsService
     {
         private readonly IClock _clock;
-        private readonly List<Unit> _units;
+        private List<Unit> _units;
         private readonly UsersRepo _usersRepo;
 
         public UnitsService(IClock clock, UsersRepo usersRepo)
@@ -15,7 +15,6 @@ namespace Duncan.Services
             _clock = clock;
             _usersRepo = usersRepo;
             _units = GetAllUnits();
-            _clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6));
         }
 
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
@@ -44,9 +43,10 @@ namespace Duncan.Services
             }
         }
 
-        private void LaunchAllUnitsFight()
+        public void LaunchAllUnitsFight()
         {
-            foreach (var unit in _units)
+            _units = GetAllUnits();
+            foreach (Unit unit in _units)
             {
                 if (IsCombatUnit(unit.Type))
                 {
@@ -54,7 +54,7 @@ namespace Duncan.Services
                 }
             };
 
-            foreach (var unit in _units)
+            foreach (Unit unit in _units)
             {
                 if (unit.Health <= 0)
                     _usersRepo.GetUserWithUnitId(unit.Id).Units.Remove(unit);
@@ -62,42 +62,34 @@ namespace Duncan.Services
         }
 
         private void ProcessAttackBis(Unit unitThatAttack)
-
         { 
             User userOwner = _usersRepo.GetUserWithUnitId(unitThatAttack.Id);
             List<Unit> enemies = GetEnemy(userOwner); // User different de warunit;
             List<Unit> enemiesAtSameLocation = GetEnemiesAtSameLocation(enemies, userOwner);
             List<Unit> enemiesOrderedByPriorityThenByHealth = GetPriorityByTypeThenByHealth(unitThatAttack.Type)
                 ?.SelectMany(priorityList => enemiesAtSameLocation.Where(unit => priorityList.Contains(unit.Type)))
-                .OrderBy(unit => unit.Health)
                 .ToList();
             Unit targetUnit = enemiesOrderedByPriorityThenByHealth.FirstOrDefault();
             if (targetUnit is null) return;
-            targetUnit.Health -= GetUnitDamage(unitThatAttack.Type, targetUnit.Type); 
+            targetUnit.Health -= GetUnitDamage(unitThatAttack.Type, targetUnit.Type);
         }
         private List<Unit> GetEnemiesAtSameLocation(List<Unit> enemies, User userOwner)
         {
-            if (userOwner != null)
-            {
-                return enemies
-                .Where(unitEnemie =>
-                    userOwner.Units.Any(unit =>
-                        (unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System)) ||
-                        (!unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System))
-                    )
+            return enemies
+            .Where(unitEnemie =>
+                userOwner.Units.Any(unit =>
+                    (unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System)) ||
+                    (!unit.Planet.Equals(unitEnemie.Planet) && unit.System.Equals(unitEnemie.System))
                 )
-                .ToList();
-            }
-            return null;
+            )
+            .ToList();
         }
         private List<Unit> GetEnemy(User userOwner)
         {
-            if (userOwner != null)
-                return _units
-                    .Where(unit => !userOwner.Units.Any(userUnit => userUnit.Equals(unit)))
-                    .Where(unit => unit.Type != "scout" && unit.Type != "builder")
-                    .ToList();
-            return null;
+            return _units
+                .Where(unit => !userOwner.Units.Any(userUnit => userUnit.Equals(unit)))
+                .Where(unit => unit.Type != "scout" && unit.Type != "builder")
+                .ToList();
         }
 
 
@@ -132,7 +124,7 @@ namespace Duncan.Services
         {
             "bomber" => new List<string> { "cruiser", "bomber", "fighter" },
             "fighter" => new List<string> { "bomber", "fighter", "cruiser" },
-            "cruiser" => new List<string> { "fighter", "bomber", "cruiser" },
+            "cruiser" => new List<string> { "fighter", "cruiser", "bomber" },
             "builder" => new List<string> { },
             "scout" => new List<string> { },
         };
@@ -140,15 +132,25 @@ namespace Duncan.Services
         {
             return unitType == "cruiser" || unitType == "bomber" || unitType == "fighter";
         }
-        private int? GetUnitDamage(string? unitTypeThatAttack, string? targetUnitType) =>
-            (unitTypeThatAttack, targetUnitType) switch
+        private int? GetUnitDamage(string? unitTypeThatAttack, string? targetUnitType)
+        {
+            if (unitTypeThatAttack == "bomber" && _clock.Now.Second % 60 == 0)
             {
-                ("bomber", "bomber") => 400,
-                ("bomber", _) => 40,
+                return 400;
+            }
+
+            return (unitTypeThatAttack, targetUnitType) switch
+            {
+                ("bomber", "cruiser") => 0,
+                ("bomber", "fighter") => 0,
+                ("bomber", "bomber") => 0,
                 ("fighter", _) => 10,
+                ("cruiser", "bomber") => 4,
                 ("cruiser", _) => 40,
                 _ => null
             };
+        }
+
 
 
     }

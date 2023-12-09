@@ -21,12 +21,12 @@ namespace Duncan.Controllers
 
         public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo, IClock clock)
         {
-            this._map = mapGenerator;
-            this._unitsRepo = unitsRepo;
-            this._usersRepo = usersRepo;
-            this._systemsRepo = systemsRepo;
-            this._planetRepo = planetRepo;
-            this._unitsService = unitsService;
+            _map = mapGenerator;
+            _unitsRepo = unitsRepo;
+            _usersRepo = usersRepo;
+            _systemsRepo = systemsRepo;
+            _planetRepo = planetRepo;
+            _unitsService = unitsService;
             _clock = clock;
         }
 
@@ -81,7 +81,6 @@ namespace Duncan.Controllers
                         unit.Health = 400;
                         break;
                 }
-                new UnitsService(_clock, _usersRepo);
                 return unit;
             }
 
