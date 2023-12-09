@@ -81,7 +81,7 @@ namespace Duncan.Controllers
                         unit.Health = 400;
                         break;
                 }
-                _unitsService.LaunchTimer();
+                new UnitsService(_clock, _usersRepo);
                 return unit;
             }
 

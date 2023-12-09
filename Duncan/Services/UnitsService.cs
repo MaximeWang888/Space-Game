@@ -15,6 +15,7 @@ namespace Duncan.Services
             _clock = clock;
             _usersRepo = usersRepo;
             _units = GetAllUnits();
+            _clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6));
         }
 
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
@@ -43,10 +44,6 @@ namespace Duncan.Services
             }
         }
 
-        public void LaunchTimer()
-        {
-            _clock.CreateTimer(_ => LaunchAllUnitsFight(), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
-        }
         private void LaunchAllUnitsFight()
         {
             foreach (var unit in _units)
@@ -55,7 +52,6 @@ namespace Duncan.Services
                 {
                     ProcessAttackBis(unit);
                 }
-                // warUnit.Fight(_clock, GetEnemyOnLocation);
             };
 
             foreach (var unit in _units)
@@ -78,23 +74,7 @@ namespace Duncan.Services
             Unit targetUnit = enemiesOrderedByPriorityThenByHealth.FirstOrDefault();
             if (targetUnit is null) return;
             targetUnit.Health -= GetUnitDamage(unitThatAttack.Type, targetUnit.Type); 
-
-
-            //var unitTypePriority = GetNextTargetsType(unitThatAttack);
-            //var unitsAround = _units.Where(unit => unitThatAttack.Planet == unit.Planet && unitThatAttack.System == unit.System);
-            //// ajouter une cond qui vérifie que les vaisseau de la liste unitsAround n'appartient pas à l'user
-            //var firstTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[0]);
-            //var secondTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[1]);
-            //var thirdTarget = unitsAround.Where(unit => unit.Type == unitTypePriority[2]);
-            //var rightTarget = firstTarget.Count() != 0 ? firstTarget : secondTarget.Count() != 0 ? secondTarget : thirdTarget;
-            //var orderedRightTarget = rightTarget.OrderBy(unit => unit.Health); // jsplu si c'est ascending ou descending
-            //var unitToAttack = orderedRightTarget.FirstOrDefault();
-            //unitToAttack.Health -= GetUnitDamage(unitThatAttack, unitToAttack.Type);
         }
-
-        // Sur les vaisseaux du lieu
-        // Même planète d’un système si sur planète
-        // Même système si hors planète
         private List<Unit> GetEnemiesAtSameLocation(List<Unit> enemies, User userOwner)
         {
             if (userOwner != null)
