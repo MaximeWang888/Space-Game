@@ -71,7 +71,7 @@ namespace Duncan.Services
             {
                 if (IsCombatUnit(unit.Type))
                 {
-                    ProcessAttackBis(unit);
+                    ProcessAttack(unit);
                 }
             };
 
@@ -82,12 +82,12 @@ namespace Duncan.Services
             };
         }
 
-        private void ProcessAttackBis(Unit unitThatAttack)
+        private void ProcessAttack(Unit unitThatAttack)
         { 
             User? userOwner = _usersRepo.GetUserWithUnitId(unitThatAttack.Id);
             List<Unit> enemies = userOwner is not null ? GetEnemies(userOwner) : new List<Unit>() ;
             List<Unit> enemiesAtSameLocation = GetEnemiesAtSameLocation(enemies, userOwner);
-            List<Unit>? enemiesOrderedByPriorityThenByHealth = GetPriorityByTypeThenByHealth(unitThatAttack.Type)
+            List<Unit>? enemiesOrderedByPriorityThenByHealth = GetPriorityByType(unitThatAttack.Type)
                 ?.SelectMany(priorityList => enemiesAtSameLocation.Where(unit => priorityList.Contains(unit.Type)))
                 .ToList();
             Unit? targetUnit = enemiesOrderedByPriorityThenByHealth?.FirstOrDefault();
@@ -123,7 +123,7 @@ namespace Duncan.Services
                 .SelectMany(u => u.Units ?? Enumerable.Empty<Unit>())
                 .ToList();
         }
-        private static List<string>? GetPriorityByTypeThenByHealth(string type) => type switch
+        private static List<string>? GetPriorityByType(string type) => type switch
         {
             "bomber" => new List<string> { "cruiser", "bomber", "fighter" },
             "fighter" => new List<string> { "bomber", "fighter", "cruiser" },
