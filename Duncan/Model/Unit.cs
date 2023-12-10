@@ -15,10 +15,9 @@ namespace Duncan.Model
 
         [JsonIgnore]
         public Task? Task { get; set; }
-
         public Unit()
         {
-            this.Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString();
         }
     }
 }

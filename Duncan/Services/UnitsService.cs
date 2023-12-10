@@ -7,40 +7,30 @@ namespace Duncan.Services
     public class UnitsService
     {
         private readonly IClock _clock;
-        private List<Unit> _units;
         private readonly UsersRepo _usersRepo;
 
         public UnitsService(IClock clock, UsersRepo usersRepo)
         {
             _clock = clock;
             _usersRepo = usersRepo;
-            _units = GetAllUnits();
         }
+
         public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
         {
             currentUnit.DestinationPlanet = unitToMove.DestinationPlanet;
             currentUnit.DestinationSystem = unitToMove.DestinationSystem;
 
+            int travelTime = unitToMove.DestinationSystem == unitToMove.System ? 15 : 60;
+
+            await Waiting(currentUnit, travelTime);
+
+            currentUnit.System = unitToMove.DestinationSystem;
+            currentUnit.Planet = unitToMove.DestinationPlanet;
+
             if (unitToMove.DestinationSystem == unitToMove.System)
-            {
-                if (unitToMove.DestinationPlanet != null)
-                    await Waiting(currentUnit, 15);
-                else
-                    currentUnit.EstimatedTimeOfArrival = _clock.Now;
-
-                currentUnit.Planet = unitToMove.DestinationPlanet;
-            }
-            else if (unitToMove.DestinationSystem != currentUnit.System)
-            {
-                await Waiting(currentUnit, 60);
-                currentUnit.System = unitToMove.DestinationSystem;
-
-                if (unitToMove.DestinationPlanet != null)
-                    await Waiting(currentUnit, 15);
-
-                currentUnit.Planet = unitToMove.DestinationPlanet;
-            }
+                currentUnit.EstimatedTimeOfArrival = unitToMove.DestinationPlanet != null ? null : _clock.Now;
         }
+
 
         private async Task Waiting(Unit currentUnit, int time)
         {
@@ -66,8 +56,7 @@ namespace Duncan.Services
 
         public void LaunchAllUnitsFight()
         {
-            _units = GetAllUnits();
-            foreach (Unit unit in _units)
+            foreach (Unit unit in GetAllUnits())
             {
                 if (IsCombatUnit(unit.Type))
                 {
@@ -75,11 +64,10 @@ namespace Duncan.Services
                 }
             };
 
-            foreach (Unit unit in _units)
+            foreach (var unit in GetAllUnits().Where(unit => unit.Health <= 0))
             {
-                if (unit.Health <= 0)
-                    _usersRepo?.GetUserWithUnitId(unit.Id)?.Units?.Remove(unit);
-            };
+                _usersRepo?.GetUserWithUnitId(unit.Id)?.Units?.Remove(unit);
+            }
         }
 
         private void ProcessAttack(Unit unitThatAttack)
@@ -109,7 +97,7 @@ namespace Duncan.Services
         }
         private List<Unit> GetEnemies(User userOwner)
         {
-            return _units
+            return GetAllUnits()
                 .Where(unit => userOwner.Units is not null && !userOwner.Units.Any(userUnit => userUnit.Equals(unit)))
                 .Where(unit => unit.Type != "scout" && unit.Type != "builder")
                 .ToList();

@@ -1,3 +1,4 @@
+using Duncan.Helper;
 using Duncan.Model;
 using Duncan.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +17,9 @@ namespace Duncan.Controllers
 
         public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
         {
-            this._userDB = userDB;
-            this._map = mapGenerator;
-            this._usersRepo = usersRepo;
+            _userDB = userDB;
+            _map = mapGenerator;
+            _usersRepo = usersRepo;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]

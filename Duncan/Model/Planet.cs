@@ -1,12 +1,9 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Duncan.Model
+﻿namespace Duncan.Model
 {
     public class Planet
     {
         public string Name { get; }
         public int Size { get; }
-
         public Planet(string Name, int Size)
         {
             this.Name = Name;

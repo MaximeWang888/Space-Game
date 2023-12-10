@@ -16,7 +16,6 @@ public class TimedHostedService : IHostedService, IDisposable
     public Task StartAsync(CancellationToken stoppingToken)
     {
         _clock.CreateTimer(_ => _unitsService.LaunchAllUnitsFight(), null, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6));
-
         return Task.CompletedTask;
     }
 

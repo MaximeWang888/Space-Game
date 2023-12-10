@@ -40,12 +40,5 @@ namespace Duncan.Utils
                     return 0;
             }
         }
-
-
-        //public void DeleteUnit(Unit unit, User user)
-        //{
-        //    user.Units?.Remove(unit);
-        //}
-
     }
 }

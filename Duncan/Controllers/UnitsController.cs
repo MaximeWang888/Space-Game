@@ -1,4 +1,5 @@
-﻿using Duncan.Model;
+﻿using Duncan.Helper;
+using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
@@ -17,9 +18,8 @@ namespace Duncan.Controllers
         private readonly SystemsRepo _systemsRepo;
         private readonly PlanetRepo _planetRepo;
         private readonly UnitsService _unitsService;
-        private readonly IClock _clock;
 
-        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo, IClock clock)
+        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
             _map = mapGenerator;
             _unitsRepo = unitsRepo;
@@ -27,7 +27,6 @@ namespace Duncan.Controllers
             _systemsRepo = systemsRepo;
             _planetRepo = planetRepo;
             _unitsService = unitsService;
-            _clock = clock;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
@@ -63,18 +62,13 @@ namespace Duncan.Controllers
                 user.Units.Add(unit);
                 unit.DestinationPlanet = unit.Planet;
                 unit.DestinationSystem = unit.System;
-                switch (unit.Type)
+                unit.Health = unit.Type switch
                 {
-                    case "bomber":
-                        unit.Health = 50;
-                        break;
-                    case "fighter":
-                        unit.Health = 80;
-                        break;
-                    case "cruiser":
-                        unit.Health = 400;
-                        break;
-                }
+                    "bomber" => 50,
+                    "fighter" => 80,
+                    "cruiser" => 400,
+                    _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
+                };
                 return unit;
             }
 
@@ -84,7 +78,9 @@ namespace Duncan.Controllers
 
             var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
 
-            if (building != null && unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet || unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)
+            if (building != null &&
+                ((unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet) ||
+                 (unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)))
             {
                 building.CancellationSource.Cancel();
                 user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
