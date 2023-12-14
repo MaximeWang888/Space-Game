@@ -54,8 +54,9 @@ namespace Duncan.Controllers
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
 
             bool isAdmin = HelperAuth.isAdmin(Request);
+            bool isFakeRemoteUser = HelperAuth.isFakeRemoteUser(Request);
 
-            if (unitFound == null && !isAdmin)
+            if (unitFound == null && !isAdmin && !isFakeRemoteUser)
                 return Unauthorized("Unauthorized");
             else if (isAdmin)
             {
@@ -69,6 +70,11 @@ namespace Duncan.Controllers
                     "cruiser" => 400,
                     _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
                 };
+                return unit;
+            } else if (isFakeRemoteUser)
+            {
+                unit.System = "80ad7191-ef3c-14f0-7be8-e875dad4cfa6";
+                user.Units.Add(unit);
                 return unit;
             }
 
