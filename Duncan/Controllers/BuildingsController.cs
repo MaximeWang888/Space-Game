@@ -141,28 +141,33 @@ namespace Duncan.Controllers
 
             switch (queueRequest.Type)
             {
+                case "scout" when (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5):
+                    return BadRequest("Not enough resources");
+
+                case "scout" when (building.Type == "mine" || building.IsBuilt == false):
+                    return BadRequest();
+
                 case "scout":
-
-                    if (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5)
-                        return BadRequest("Not enough resources");
-
-                    if (building.Type == "mine") return BadRequest();
-
-                    if (building.IsBuilt == false) return BadRequest();
-
                     user.ResourcesQuantity["iron"] -= 5;
                     user.ResourcesQuantity["carbon"] -= 5;
-
-                    return Ok(unitFound);
+                    break;
 
                 case "builder":
                     user.ResourcesQuantity["iron"] -= 10;
                     user.ResourcesQuantity["carbon"] -= 5;
+                    break;
 
-                    return Ok(unitFound);
+                case "cargo":
+                    user.ResourcesQuantity["carbon"] -= 10;
+                    user.ResourcesQuantity["iron"] -= 10;
+                    user.ResourcesQuantity["gold"] -= 5;
+                    break;
+
+                default:
+                    return Ok(building);
             }
 
-            return Ok(building);
+            return Ok(unitFound);
         }
     }
 }

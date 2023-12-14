@@ -79,14 +79,23 @@ namespace Duncan.Controllers
                 {
                     ResourcesQuantity[key] = value;
                 }
-            } 
+            }
 
             user.Id = user.Id;
             user.Pseudo = user.Pseudo;
-            user.DateOfCreation = new DateTime();
-            user.ResourcesQuantity = ResourcesQuantity;
-            user.Units?.Add(unit_1);
-            user.Units?.Add(unit_2);
+
+            if (HelperAuth.isFakeRemoteUser(Request))
+            {
+                user.DateOfCreation = user.DateOfCreation;
+                user.ResourcesQuantity = ResourcesQuantity.ToDictionary(kv => kv.Key, kv => 0);
+            }
+            else
+            {
+                user.DateOfCreation = new DateTime();
+                user.ResourcesQuantity = ResourcesQuantity;
+                user.Units?.Add(unit_1);
+                user.Units?.Add(unit_2);
+            }
 
             _userDB?.users.Add(user);
 
