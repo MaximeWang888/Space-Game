@@ -56,7 +56,11 @@ namespace Duncan.Controllers
             bool isAdmin = HelperAuth.isAdmin(Request);
             bool isFakeRemoteUser = HelperAuth.isFakeRemoteUser(Request);
 
-            if (unitFound == null && !isAdmin && !isFakeRemoteUser)
+            if (unitFound == null && !isAdmin && !isFakeRemoteUser && unit.Type == "cargo") 
+            {
+                return unit; 
+            }
+            else if (unitFound == null && !isAdmin && !isFakeRemoteUser)
                 return Unauthorized("Unauthorized");
             else if (isAdmin)
             {
@@ -71,7 +75,8 @@ namespace Duncan.Controllers
                     _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
                 };
                 return unit;
-            } else if (isFakeRemoteUser)
+            }
+            else if (isFakeRemoteUser)
             {
                 unit.System = "80ad7191-ef3c-14f0-7be8-e875dad4cfa6";
                 user.Units.Add(unit);

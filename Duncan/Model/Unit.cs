@@ -12,7 +12,7 @@ namespace Duncan.Model
         public string? DestinationPlanet { get; set; }
         public DateTime? EstimatedTimeOfArrival { get; set; }
         public int? Health { get; set; }
-        public IReadOnlyDictionary<string, int>? ResourcesQuantity { get; set; }
+        public IDictionary<string, int>? ResourcesQuantity { get; set; }
 
         [JsonIgnore]
         public Task? Task { get; set; }
