@@ -58,6 +58,7 @@ namespace Duncan.Controllers
 
             if (unitFound == null && !isAdmin && !isFakeRemoteUser && unit.Type == "cargo") 
             {
+                user.Units.Add(unit);
                 return unit; 
             }
             else if (unitFound == null && !isAdmin && !isFakeRemoteUser)

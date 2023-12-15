@@ -37,7 +37,9 @@ namespace Duncan.Controllers
 
             var existingUser = _userDB?.users.FirstOrDefault(u => u.Id == id);
 
-            if (existingUser != null && HelperAuth.isAdmin(Request))
+            bool isAdmin = HelperAuth.isAdmin(Request);
+
+            if (existingUser != null && isAdmin)
             {
                 existingUser.ResourcesQuantity = user.ResourcesQuantity;
 
