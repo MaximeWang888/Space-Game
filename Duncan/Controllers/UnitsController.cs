@@ -53,16 +53,19 @@ namespace Duncan.Controllers
 
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
 
-            bool isAdmin = HelperAuth.isAdmin(Request);
-            bool isFakeRemoteUser = HelperAuth.isFakeRemoteUser(Request);
+            bool isAdmin = User.IsInRole("admin");
+
+            bool isFakeRemoteUser = User.IsInRole("shard");
 
             if (unitFound == null && !isAdmin && !isFakeRemoteUser && unit.Type == "cargo") 
             {
                 user.Units.Add(unit);
                 return unit; 
             }
+
             else if (unitFound == null && !isAdmin && !isFakeRemoteUser)
                 return Unauthorized("Unauthorized");
+
             else if (isAdmin)
             {
                 user.Units.Add(unit);

@@ -1,8 +1,10 @@
 using Duncan;
+using Duncan.Authentification;
 using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Shard.Shared.Core;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +21,11 @@ builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();
 builder.Services.AddSingleton<BuildingsService>();
 builder.Services.AddHostedService<TimedHostedService>();
+builder.Services.AddAuthentication()
+    .AddScheme<AuthOptions, AuthHandler>(
+        "SessionTokens",
+        opts => { }
+    );
 
 
 builder.Services.AddControllers();
