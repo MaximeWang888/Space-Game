@@ -1,4 +1,3 @@
-using Duncan.Helper;
 using Duncan.Model;
 using Duncan.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +36,9 @@ namespace Duncan.Controllers
 
             var existingUser = _userDB?.users.FirstOrDefault(u => u.Id == id);
 
-            bool isAdmin = HelperAuth.isAdmin(Request);
+            bool isAdmin = User.IsInRole("admin");
+
+            bool isFakeRemoteUser = User.IsInRole("shard");
 
             if (existingUser != null && isAdmin)
             {
@@ -75,7 +76,8 @@ namespace Duncan.Controllers
                 {"water", 50}
             };
 
-            if (HelperAuth.isAdmin(Request))
+
+            if (isAdmin)
             {
                 foreach (var (key, value) in user.ResourcesQuantity)
                 {
@@ -86,7 +88,7 @@ namespace Duncan.Controllers
             user.Id = user.Id;
             user.Pseudo = user.Pseudo;
 
-            if (HelperAuth.isFakeRemoteUser(Request))
+            if (isFakeRemoteUser)
             {
                 user.DateOfCreation = user.DateOfCreation;
                 user.ResourcesQuantity = ResourcesQuantity.ToDictionary(kv => kv.Key, kv => 0);
