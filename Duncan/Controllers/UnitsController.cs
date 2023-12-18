@@ -86,6 +86,40 @@ namespace Duncan.Controllers
                 return unit;
             }
 
+            if(!unit.ResourcesQuantity.All(kv => kv.Value == 0))
+            {
+                if (unitFound.Type == "cargo")
+                {
+                    foreach (var resource in unit.ResourcesQuantity.Keys.ToList())
+                    {
+                        int bodyQuantity = unit.ResourcesQuantity[resource];
+                        int cargoQuantity = unitFound.ResourcesQuantity[resource];
+                        int diff = bodyQuantity - cargoQuantity;
+
+                        if (diff > 0)
+                        {
+                            unitFound.ResourcesQuantity[resource] +=  diff;
+                            user.ResourcesQuantity[resource] -= diff;
+                        }
+                        else if (diff < 0)
+                        {
+                            user.ResourcesQuantity[resource] -= diff;
+                            unitFound.ResourcesQuantity[resource] += diff;
+                        }
+                    }
+                }
+
+                else
+                {
+                    return BadRequest();
+                }
+            }
+
+            if (user.ResourcesQuantity.Any(kv => kv.Value < 0 ))
+            {
+                return BadRequest();
+            }
+
             unitFound.DestinationPlanet = unit.DestinationPlanet;
             unitFound.DestinationSystem = unit.DestinationSystem;
             unitFound.Task = _unitsService.WaitingUnit(unit, unitFound);

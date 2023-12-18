@@ -19,7 +19,16 @@ namespace Duncan.Model
         public Unit()
         {
             Id = Guid.NewGuid().ToString();
-            ResourcesQuantity = new Dictionary<string, int>();
+            ResourcesQuantity = new Dictionary<string, int>
+        {
+            { "carbon", 0 },
+            { "iron", 0 },
+            { "gold", 0 },
+            { "aluminium", 0 },
+            { "titanium", 0 },
+            { "water", 0 },
+            { "oxygen", 0 }
+        };
         }
     }
 }

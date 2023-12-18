@@ -139,6 +139,8 @@ namespace Duncan.Controllers
 
             var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, system, planet);
 
+            user.Units.Add(unitFound);
+
             switch (queueRequest.Type)
             {
                 case "scout" when (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5):
