@@ -134,8 +134,8 @@ namespace Duncan.Controllers
             if (building == null)
                 return NotFound();
 
-            var system = _map.Map.Systems.First().Name;
-            var planet = _map.Map.Systems.First().Planets.First().Name;
+            var system = building.System;
+            var planet = building.Planet;
 
             var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, system, planet);
 

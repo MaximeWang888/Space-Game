@@ -1,4 +1,5 @@
-﻿using Duncan.Model;
+﻿using System.Collections.Generic;
+using Duncan.Model;
 using Duncan.Repositories;
 using Shard.Shared.Core;
 
@@ -15,20 +16,25 @@ namespace Duncan.Services
             _usersRepo = usersRepo;
         }
 
-        public async Task WaitingUnit(Unit unitToMove, Unit currentUnit)
+        public async Task WaitingUnit(Unit currentUnit, Unit unitWithNewDestination)
         {
-            currentUnit.DestinationPlanet = unitToMove.DestinationPlanet;
-            currentUnit.DestinationSystem = unitToMove.DestinationSystem;
+            currentUnit.DestinationPlanet = unitWithNewDestination.DestinationPlanet;
+            currentUnit.DestinationSystem = unitWithNewDestination.DestinationSystem;
 
-            int travelTime = unitToMove.DestinationSystem == unitToMove.System ? 15 : 60;
+            var travelTime = currentUnit.DestinationSystem == currentUnit.System ? 0 : 60;
+            travelTime += currentUnit.DestinationPlanet == currentUnit.Planet ? 0 : 15;
+
+            if (travelTime == 0) {
+                //currentUnit.EstimatedTimeOfArrival = _clock.Now.AddSeconds(15); 
+                return; 
+            }
+
+            currentUnit.Planet = null;
 
             await Waiting(currentUnit, travelTime);
 
-            currentUnit.System = unitToMove.DestinationSystem;
-            currentUnit.Planet = unitToMove.DestinationPlanet;
-
-            if (unitToMove.DestinationSystem == unitToMove.System)
-                currentUnit.EstimatedTimeOfArrival = unitToMove.DestinationPlanet != null ? null : _clock.Now;
+            currentUnit.System = currentUnit.DestinationSystem;
+            currentUnit.Planet = currentUnit.DestinationPlanet;
         }
 
 
@@ -37,6 +43,7 @@ namespace Duncan.Services
             currentUnit.EstimatedTimeOfArrival = _clock.Now.AddSeconds(time);
             await _clock.Delay(time * 1000);
         }
+
 
         public async Task VerifyTimeDifference(Unit unit)
         {
@@ -53,7 +60,6 @@ namespace Duncan.Services
                     unit.Planet = null;
             }
         }
-
         public void LaunchAllUnitsFight()
         {
             foreach (Unit unit in GetAllUnits())
@@ -140,5 +146,17 @@ namespace Duncan.Services
                 _ => null
             };
         }
+
+        public bool NeedToLoadOrUnloadResources(Unit? unitFound, Unit unitBody)
+        {
+            var first = unitFound?.ResourcesQuantity;
+            var second = unitBody?.ResourcesQuantity;
+            if (first is null && second is null) return false;
+            if (first is not null && second is null) return true;
+            if (first is null && second is not null) return true;
+            return !first.OrderBy(kv => kv.Key).SequenceEqual(second.OrderBy(kv => kv.Key));
+        }
+
+    
     }
 }

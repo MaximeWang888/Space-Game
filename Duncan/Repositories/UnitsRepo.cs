@@ -19,6 +19,7 @@ namespace Duncan.Utils
             {
                 Planet = planet,
                 System = system,
+                DestinationPlanet = planet,
                 DestinationSystem = system,
                 Type = type,
                 Health = GetHealthByType(type)

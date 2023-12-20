@@ -44,7 +44,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Move Unit By Id")]
         [HttpPut("users/{userId}/units/{unitId}")]
-        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unit)
+        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
             if (user == null)
@@ -56,10 +56,10 @@ namespace Duncan.Controllers
 
             bool isFakeRemoteUser = User.IsInRole("shard");
 
-            if (unitFound == null && !isAdmin && !isFakeRemoteUser && unit.Type == "cargo") 
+            if (unitFound == null && !isAdmin && !isFakeRemoteUser && unitBody.Type == "cargo") 
             {
-                user.Units.Add(unit);
-                return unit; 
+                user.Units.Add(unitBody);
+                return unitBody; 
             }
 
             else if (unitFound == null && !isAdmin && !isFakeRemoteUser)
@@ -67,32 +67,36 @@ namespace Duncan.Controllers
 
             else if (isAdmin)
             {
-                user.Units.Add(unit);
-                unit.DestinationPlanet = unit.Planet;
-                unit.DestinationSystem = unit.System;
-                unit.Health = unit.Type switch
+                user.Units.Add(unitBody);
+                unitBody.DestinationPlanet = unitBody.Planet;
+                unitBody.DestinationSystem = unitBody.System;
+                unitBody.Health = unitBody.Type switch
                 {
                     "bomber" => 50,
                     "fighter" => 80,
                     "cruiser" => 400,
-                    _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
+                    _ => unitBody.Health // Default case, keep the existing health if the unit type is not recognized
                 };
-                return unit;
+                return unitBody;
             }
             else if (isFakeRemoteUser)
             {
-                unit.System = "80ad7191-ef3c-14f0-7be8-e875dad4cfa6";
-                user.Units.Add(unit);
-                return unit;
+                unitBody.System = "80ad7191-ef3c-14f0-7be8-e875dad4cfa6";
+                user.Units.Add(unitBody);
+                return unitBody;
             }
 
-            if(!unit.ResourcesQuantity.All(kv => kv.Value == 0))
+            if(_unitsService.NeedToLoadOrUnloadResources(unitFound, unitBody))
             {
                 if (unitFound.Type == "cargo")
                 {
-                    foreach (var resource in unit.ResourcesQuantity.Keys.ToList())
+                    var buildingOnPlanet = user.Buildings?.Where(b => b.Planet == unitFound.Planet);
+                    var isStarportOnPlanet = buildingOnPlanet.Any(b => b.Type == "starport");
+                    if (isStarportOnPlanet is false) 
+                        return BadRequest("First One");
+                    foreach (var resource in unitBody.ResourcesQuantity.Keys.ToList())
                     {
-                        int bodyQuantity = unit.ResourcesQuantity[resource];
+                        int bodyQuantity = unitBody.ResourcesQuantity[resource];
                         int cargoQuantity = unitFound.ResourcesQuantity[resource];
                         int diff = bodyQuantity - cargoQuantity;
 
@@ -108,30 +112,24 @@ namespace Duncan.Controllers
                         }
                     }
                 }
-
-                else
-                {
-                    return BadRequest();
-                }
+                else return BadRequest("Second one");
             }
 
             if (user.ResourcesQuantity.Any(kv => kv.Value < 0 ))
             {
-                return BadRequest();
+                return BadRequest("Third one");
             }
 
-            unitFound.DestinationPlanet = unit.DestinationPlanet;
-            unitFound.DestinationSystem = unit.DestinationSystem;
-            unitFound.Task = _unitsService.WaitingUnit(unit, unitFound);
+            unitFound.Task = _unitsService.WaitingUnit(unitFound, unitBody);
 
-            var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
+            var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unitBody.Id);
 
             if (building != null &&
-                ((unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet) ||
-                 (unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)))
+                ((unitBody.DestinationSystem == unitBody.System && unitBody.DestinationPlanet != unitBody.Planet) ||
+                 (unitBody.DestinationSystem != unitBody.System && unitBody.DestinationPlanet == unitBody.Planet)))
             {
                 building.CancellationSource.Cancel();
-                user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
+                user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unitBody.Id));
             }
 
             return unitFound;
