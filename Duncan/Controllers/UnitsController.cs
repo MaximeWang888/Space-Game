@@ -56,6 +56,10 @@ namespace Duncan.Controllers
 
             bool isFakeRemoteUser = User.IsInRole("shard");
 
+            if(unitFound != null) {
+                unitFound.Task = _unitsService.WaitingUnit(unitFound, unitBody);
+            }
+
             if (unitFound == null && !isAdmin && !isFakeRemoteUser && unitBody.Type == "cargo") 
             {
                 user.Units.Add(unitBody);
@@ -94,6 +98,7 @@ namespace Duncan.Controllers
                     var isStarportOnPlanet = buildingOnPlanet.Any(b => b.Type == "starport");
                     if (isStarportOnPlanet is false) 
                         return BadRequest("First One");
+
                     foreach (var resource in unitBody.ResourcesQuantity.Keys.ToList())
                     {
                         int bodyQuantity = unitBody.ResourcesQuantity[resource];
@@ -120,7 +125,6 @@ namespace Duncan.Controllers
                 return BadRequest("Third one");
             }
 
-            unitFound.Task = _unitsService.WaitingUnit(unitFound, unitBody);
 
             var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unitBody.Id);
 

@@ -25,7 +25,6 @@ namespace Duncan.Services
             travelTime += currentUnit.DestinationPlanet == currentUnit.Planet ? 0 : 15;
 
             if (travelTime == 0) {
-                //currentUnit.EstimatedTimeOfArrival = _clock.Now.AddSeconds(15); 
                 return; 
             }
 

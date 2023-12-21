@@ -47,9 +47,14 @@ namespace Duncan.Controllers
                 return Ok(existingUser); 
             }
 
+            var systems = _map.Map.Systems;
+            var random = new Random();
+            var shuffledSystems = systems.OrderBy(x => random.Next()).ToList();
+            var randomPlanetName = shuffledSystems.First().Planets.First().Name;
+
             Unit unit_1 = new Unit
             {
-                Planet = _map.Map.Systems.First().Planets.First().Name,
+                Planet = randomPlanetName,
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "scout",
@@ -58,7 +63,7 @@ namespace Duncan.Controllers
 
             Unit unit_2 = new Unit
             {
-                Planet = _map.Map.Systems.First().Planets.First().Name,
+                Planet = randomPlanetName,
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "builder",
