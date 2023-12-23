@@ -3,7 +3,6 @@ using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Any;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
