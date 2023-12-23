@@ -6,9 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Duncan.Controllers
