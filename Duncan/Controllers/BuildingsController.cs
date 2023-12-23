@@ -69,7 +69,7 @@ namespace Duncan.Controllers
             return Created("", buildingCreated);
         }
 
-        [SwaggerOperation(Summary = "Return all buildings of a user")]
+        [SwaggerOperation(Summary = "Return all buildings of a user.")]
         [HttpGet("/users/{userId}/Buildings")]
         public ActionResult<List<Building>> GetAllBuildings(string userId)
         {

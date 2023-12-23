@@ -4,7 +4,6 @@ using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Shard.Shared.Core;
 
 var builder = WebApplication.CreateBuilder(args);

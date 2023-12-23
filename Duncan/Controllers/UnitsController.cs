@@ -38,7 +38,7 @@ namespace Duncan.Controllers
             _buildingsService = buildingsService;
         }
 
-        [SwaggerOperation(Summary = "Get unit of a specific user")]
+        [SwaggerOperation(Summary = "Return all units of a user.")]
         [HttpGet("users/{userId}/Units")]
         public ActionResult<List<Unit>> GetAllUnit(string userId)
         {
@@ -52,11 +52,28 @@ namespace Duncan.Controllers
             return units;
         }
 
-        private static AuthenticationHeaderValue CreateShardAuthorizationHeader(string shardName, string sharedKey)
-                   => new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"shard-{shardName}:{sharedKey}")));
+        [SwaggerOperation(Summary = "Return information about one single unit of a user.")]
+        [HttpGet("users/{userId}/Units/{unitId}")]
+        public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
+        {
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
-        [SwaggerOperation(Summary = "Move Unit By Id" )]
-        [HttpPut("users/{userId}/units/{unitId}")]
+            if (user == null)
+                return NotFound("Not Found userWithUnits");
+
+            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
+
+            if (unitFound == null)
+                return NotFound("Not Found unitFound");
+
+            await _unitsService.VerifyTimeDifference(unitFound);
+
+            return unitFound;
+        }
+
+        [SwaggerOperation(Summary = "Change the status of a unit of a user. Right now, only its position (system and planet) can be changed - which is akin to moving it. " +
+            "If the unit does not exist and the authenticated user is administrator, creates the unit")]
+        [HttpPut("users/{userId}/Units/{unitId}")]
         public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -146,26 +163,7 @@ namespace Duncan.Controllers
             return unitFound;
         }
 
-        [SwaggerOperation(Summary = "Return information about one single unit of a user")]
-        [HttpGet("users/{userId}/Units/{unitId}")]
-        public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
-        {
-            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
-
-            if (user == null)
-                return NotFound("Not Found userWithUnits");
-
-            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
-
-            if (unitFound == null)
-                return NotFound("Not Found unitFound");
-
-            await _unitsService.VerifyTimeDifference(unitFound);
-
-            return unitFound;
-        }
-
-        [SwaggerOperation(Summary = "Get unit location by user ID and unit ID")]
+        [SwaggerOperation(Summary = "Returned more detailled information about the location a unit of user currently is about.")]
         [HttpGet("users/{userId}/Units/{unitId}/location")]
         public ActionResult<UnitLocation> GetUnitLocation(string userId, string unitId)
         {
@@ -194,5 +192,8 @@ namespace Duncan.Controllers
 
             return unitInformation;
         }
+
+        private static AuthenticationHeaderValue CreateShardAuthorizationHeader(string shardName, string sharedKey)
+                   => new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"shard-{shardName}:{sharedKey}")));
     }
 }

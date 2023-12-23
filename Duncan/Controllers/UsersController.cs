@@ -21,9 +21,9 @@ namespace Duncan.Controllers
             _usersRepo = usersRepo;
         }
 
-        [SwaggerOperation(Summary = "Put a specific user")]
+        [SwaggerOperation(Summary = "Create a new user")]
         [HttpPut("{id}")]
-        public ActionResult<User> PutUserById(string id, [FromBody] User user)
+        public ActionResult<User> CreateNewUser(string id, [FromBody] User user)
         {
             if (user == null)
                 return BadRequest("Request body is required");
@@ -111,7 +111,7 @@ namespace Duncan.Controllers
             return user;
         }
 
-        [SwaggerOperation(Summary = "Get a specific user")]
+        [SwaggerOperation(Summary = "Returns details of an existing user")]
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
