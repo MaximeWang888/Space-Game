@@ -5,7 +5,7 @@ namespace Duncan.Services
 {
     public class SystemsService
     {
-        public void SystemsTransformation(IList<CustomSystem> CustomSystems, MapGeneratorWrapper map)
+        public void TransformSystems(IList<CustomSystem> CustomSystems, MapGeneratorWrapper map)
         {
             foreach (SystemSpecification system in map.Map.Systems)
             {

@@ -5,7 +5,7 @@ namespace Duncan.Repositories
 {
     public class SystemsRepo
     {
-        public CustomSystem? GetSystemByName(string systemName, IList<CustomSystem> systems)
+        public CustomSystem? FindSystemByName(string systemName, IList<CustomSystem> systems)
         {
             return systems.FirstOrDefault(system => system.Name == systemName);
         }
