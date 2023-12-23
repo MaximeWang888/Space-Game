@@ -14,7 +14,7 @@ namespace Duncan.Utils
             return user.Units?.FirstOrDefault(u => u.Type == type);
         }
 
-        public Unit? CreateUnitWithType(string type, string system, string planet)
+        public Unit CreateUnitWithType(string type, string system, string planet)
         {
             Unit unit = new Unit
             {
