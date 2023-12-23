@@ -29,7 +29,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Creates a building at a location.")]
         [HttpPost("/users/{userId}/Buildings")]
-        public ActionResult<Building> BuildMine(string userId, [FromBody] BuildingBody building)
+        public ActionResult<Building> CreateBuilding(string userId, [FromBody] BuildingBody building)
         {
 
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -71,7 +71,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return all buildings of a user")]
         [HttpGet("/users/{userId}/Buildings")]
-        public ActionResult<List<Building>> GetBuildings(string userId)
+        public ActionResult<List<Building>> GetAllBuildings(string userId)
         {
 
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -113,7 +113,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Add a unit to the build queue of the starport. Currently immediatly returns the unit.")]
         [HttpPost("/users/{userId}/Buildings/{starportId}/queue")]
-        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody? queueRequest)
+        public async Task<ActionResult<AnyType>> AddUnitToBuildQueue(string userId, string starportId, [FromBody] QueueBody? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
