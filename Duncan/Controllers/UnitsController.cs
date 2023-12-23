@@ -38,7 +38,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return all units of a user.")]
         [HttpGet("users/{userId}/Units")]
-        public ActionResult<List<Unit>> GetAllUnit([FromRoute] string userId)
+        public ActionResult<List<Unit>> GetAllUnits([FromRoute] string userId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -72,7 +72,7 @@ namespace Duncan.Controllers
         [SwaggerOperation(Summary = "Change the status of a unit of a user. Right now, only its position (system and planet) can be changed - which is akin to moving it. " +
             "If the unit does not exist and the authenticated user is administrator, creates the unit")]
         [HttpPut("users/{userId}/Units/{unitId}")]
-        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync([FromRoute] string userId, [FromRoute] string unitId, [FromBody] Unit unitBody)
+        public async Task<ActionResult<Unit?>> ChangeStatusOfUnit([FromRoute] string userId, [FromRoute] string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -167,11 +167,11 @@ namespace Duncan.Controllers
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
             if (user == null)
-                return NotFound("Not Found userWithUnits");
+                return NotFound("User not found");
 
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
             if (unitFound == null)
-                return NotFound("Not Found unitFound");
+                return NotFound("Unit not found");
 
             UnitLocation unitInformation = new UnitLocation();
             unitInformation.System = unitFound.System;
@@ -179,11 +179,11 @@ namespace Duncan.Controllers
 
             SystemSpecification? system = _systemsRepo.GetSystemByName(unitFound.System, _map.Map.Systems);
             if (system == null)
-                return NotFound("Not Found system");
+                return NotFound("System not found");
 
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(unitFound.Planet, system);
             if (planet == null)
-                return NotFound("Not Found planet");
+                return NotFound("Planet not found");
 
             if (unitFound.Type == "scout")
                 unitInformation.ResourcesQuantity = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
