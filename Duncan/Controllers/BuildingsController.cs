@@ -29,7 +29,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Creates a building at a location.")]
         [HttpPost("/users/{userId}/Buildings")]
-        public ActionResult<Building> CreateBuilding(string userId, [FromBody] BuildingBody building)
+        public ActionResult<Building> CreateBuildingAtLocation([FromRoute] string userId, [FromBody] BuildingBody building)
         {
 
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -71,7 +71,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return all buildings of a user.")]
         [HttpGet("/users/{userId}/Buildings")]
-        public ActionResult<List<Building>> GetAllBuildings(string userId)
+        public ActionResult<List<Building>> GetAllBuildingsForUser([FromRoute] string userId)
         {
 
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
@@ -84,7 +84,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return information about one single building of a user.")]
         [HttpGet("/users/{userId}/Buildings/{buildingId}")]
-        public async Task<ActionResult<Building>> GetSingleBuilding(string userId, string buildingId)
+        public async Task<ActionResult<Building>> GetInformationAboutBuilding([FromRoute] string userId, [FromRoute] string buildingId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -113,7 +113,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Add a unit to the build queue of the starport. Currently immediatly returns the unit.")]
         [HttpPost("/users/{userId}/Buildings/{starportId}/queue")]
-        public async Task<ActionResult<AnyType>> AddUnitToBuildQueue(string userId, string starportId, [FromBody] QueueBody? queueRequest)
+        public ActionResult<AnyType> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] QueueBody? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -186,7 +186,7 @@ namespace Duncan.Controllers
             return true;
         }
 
-        private bool IsInvalidUnitCase(string unitType, Building building, User user)
+        private bool IsInvalidUnitCase([FromRoute] string unitType, Building building, User user)
         {
             return unitType switch
             {

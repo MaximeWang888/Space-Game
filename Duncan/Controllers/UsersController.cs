@@ -23,7 +23,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Create a new user")]
         [HttpPut("{id}")]
-        public ActionResult<User> CreateNewUser(string id, [FromBody] User user)
+        public ActionResult<User> CreateNewUser([FromRoute] string id, [FromBody] User user)
         {
             if (user == null)
                 return BadRequest("Request body is required");
@@ -113,7 +113,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Returns details of an existing user")]
         [HttpGet("{id}")]
-        public ActionResult<User> GetUserById(string id)
+        public ActionResult<User> GetUserById([FromRoute] string id)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(id);
 

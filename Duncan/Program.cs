@@ -14,7 +14,7 @@ builder.Services.AddSingleton<IClock>(new SystemClock());
 builder.Services.AddSingleton<UserDB>();
 builder.Services.AddSingleton<UnitsRepo>();
 builder.Services.AddSingleton<UsersRepo>();
-builder.Services.AddSingleton<PlanetRepo>();
+builder.Services.AddSingleton<PlanetsRepo>();
 builder.Services.AddSingleton<SystemsRepo>();
 builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();

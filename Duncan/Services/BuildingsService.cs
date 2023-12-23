@@ -9,8 +9,8 @@ namespace Duncan.Services
         private readonly MapGeneratorWrapper _map;
         private readonly IClock _clock;
         private readonly SystemsRepo _systemsRepo;
-        private readonly PlanetRepo _planetRepo;
-        public BuildingsService(MapGeneratorWrapper mapGenerator, IClock clock, SystemsRepo systemsRepo, PlanetRepo planetRepo)
+        private readonly PlanetsRepo _planetRepo;
+        public BuildingsService(MapGeneratorWrapper mapGenerator, IClock clock, SystemsRepo systemsRepo, PlanetsRepo planetRepo)
         {
             _map = mapGenerator; 
             _systemsRepo = systemsRepo;

@@ -3,7 +3,7 @@ using Shard.Shared.Core;
 
 namespace Duncan.Repositories
 {
-    public class PlanetRepo
+    public class PlanetsRepo
     {
         public Planet? GetPlanetByName(string planetName, IList<Planet> planetsSelected)
         {

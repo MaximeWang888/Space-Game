@@ -19,13 +19,13 @@ namespace Duncan.Controllers
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
         private readonly SystemsRepo _systemsRepo;
-        private readonly PlanetRepo _planetRepo;
+        private readonly PlanetsRepo _planetRepo;
         private readonly UnitsService _unitsService;
         private readonly BuildingsService _buildingsService;
         private Dictionary<string, Wormholes> _wormholes;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public UnitsController(IHttpClientFactory httpClientFactory, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo, IOptions<Dictionary<string, Wormholes>> wormholes, BuildingsService buildingsService)
+        public UnitsController(IHttpClientFactory httpClientFactory, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetsRepo planetRepo, IOptions<Dictionary<string, Wormholes>> wormholes, BuildingsService buildingsService)
         {
             _map = mapGenerator;
             _unitsRepo = unitsRepo;
@@ -40,7 +40,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return all units of a user.")]
         [HttpGet("users/{userId}/Units")]
-        public ActionResult<List<Unit>> GetAllUnit(string userId)
+        public ActionResult<List<Unit>> GetAllUnit([FromRoute] string userId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -54,7 +54,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Return information about one single unit of a user.")]
         [HttpGet("users/{userId}/Units/{unitId}")]
-        public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
+        public async Task<ActionResult<Unit>> GetUnitInformation([FromRoute] string userId, [FromRoute] string unitId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -74,7 +74,7 @@ namespace Duncan.Controllers
         [SwaggerOperation(Summary = "Change the status of a unit of a user. Right now, only its position (system and planet) can be changed - which is akin to moving it. " +
             "If the unit does not exist and the authenticated user is administrator, creates the unit")]
         [HttpPut("users/{userId}/Units/{unitId}")]
-        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unitBody)
+        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync([FromRoute] string userId, [FromRoute] string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -165,7 +165,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Returned more detailled information about the location a unit of user currently is about.")]
         [HttpGet("users/{userId}/Units/{unitId}/location")]
-        public ActionResult<UnitLocation> GetUnitLocation(string userId, string unitId)
+        public ActionResult<UnitLocation> GetUnitLocation([FromRoute] string userId, [FromRoute] string unitId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
             if (user == null)
