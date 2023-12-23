@@ -26,9 +26,9 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Fetches all systems, and their planet")]
         [HttpGet("")]
-        public IList<CustomSystem> GetAllSystems()
+        public IList<StarSystem> GetAllSystems()
         {
-            IList<CustomSystem> customSystems = new List<CustomSystem>();
+            IList<StarSystem> customSystems = new List<StarSystem>();
 
             _systemsService.TransformSystems(customSystems, _map);
 
@@ -37,9 +37,9 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Fetches a single system, and all its planets")]
         [HttpGet("{systemName}")]
-        public CustomSystem GetSystem([FromRoute] string systemName)
+        public StarSystem GetSystem([FromRoute] string systemName)
         {
-            IList<CustomSystem> systems = GetAllSystems();
+            IList<StarSystem> systems = GetAllSystems();
 
             return _systemsRepo.FindSystemByName(systemName, systems);
         }
@@ -48,7 +48,7 @@ namespace Duncan.Controllers
         [HttpGet("{systemName}/planets")]
         public IList<Planet> GetAllPlanetsOfSystem([FromRoute] string systemName)
         {
-            CustomSystem system = GetSystem(systemName);
+            StarSystem system = GetSystem(systemName);
 
             return system.Planets;
         }

@@ -112,7 +112,7 @@ namespace Duncan.Controllers
 
         [SwaggerOperation(Summary = "Add a unit to the build queue of the starport. Currently immediatly returns the unit.")]
         [HttpPost("/users/{userId}/Buildings/{starportId}/queue")]
-        public ActionResult<Unit> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] QueueBody? queueRequest)
+        public ActionResult<Unit> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] UnitBlueprint? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
