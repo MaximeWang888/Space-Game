@@ -26,6 +26,9 @@ builder.Services.AddAuthentication()
         "SessionTokens",
         opts => { }
     );
+builder.Services.Configure<Dictionary<string, Wormholes>>(builder.Configuration.GetSection("Wormholes"));
+builder.Services.AddHttpClient();
+
 
 
 builder.Services.AddControllers();

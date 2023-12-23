@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Duncan.Model;
 using Duncan.Repositories;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Shard.Shared.Core;
 
 namespace Duncan.Services
@@ -59,6 +60,27 @@ namespace Duncan.Services
                     unit.Planet = null;
             }
         }
+
+        public void LoadAndUnloadResources(User user ,Unit unitFound, Unit unitBody)
+        {
+            foreach (var resource in unitBody.ResourcesQuantity.Keys.ToList())
+            {
+                int bodyQuantity = unitBody.ResourcesQuantity[resource];
+                int cargoQuantity = unitFound.ResourcesQuantity[resource];
+                int diff = bodyQuantity - cargoQuantity;
+
+                if (diff > 0)
+                {
+                    unitFound.ResourcesQuantity[resource] += diff;
+                    user.ResourcesQuantity[resource] -= diff;
+                }
+                else if (diff < 0)
+                {
+                    user.ResourcesQuantity[resource] -= diff;
+                    unitFound.ResourcesQuantity[resource] += diff;
+                }
+            }
+        }
         public void LaunchAllUnitsFight()
         {
             foreach (Unit unit in GetAllUnits())
@@ -71,7 +93,7 @@ namespace Duncan.Services
 
             foreach (var unit in GetAllUnits().Where(unit => unit.Health <= 0))
             {
-                _usersRepo?.GetUserWithUnitId(unit.Id)?.Units?.Remove(unit);
+                if(unit.Type != "cargo") _usersRepo?.GetUserWithUnitId(unit.Id)?.Units?.Remove(unit);
             }
         }
 

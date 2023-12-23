@@ -24,6 +24,11 @@ namespace Duncan.Services
             building.IsBuilt = true;
             building.EstimatedBuildTime = null;
         }
+
+        public void CancelBuildingTask(User? user, Building? building, Unit? unitBody) {
+            building?.CancellationSource?.Cancel();
+            user?.Buildings?.Remove(user?.Buildings?.FirstOrDefault(b => b.BuilderId == unitBody.Id));
+        }
         public async Task ProcessExtract(Building building, User user, string resourceCategory)
         {
             SystemSpecification? system = _systemsRepo.GetSystemByName(building.System, _map.Map.Systems);

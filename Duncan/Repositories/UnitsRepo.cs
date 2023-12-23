@@ -1,4 +1,5 @@
 ﻿using Duncan.Model;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Duncan.Utils
 {
@@ -27,6 +28,19 @@ namespace Duncan.Utils
             return unit;
         }
 
+        public bool CheckIfThereIsStarportOnPlanet(User user, Unit unitFound)
+        {
+            var buildingOnPlanet = user.Buildings?.Where(b => b.Planet == unitFound.Planet);
+           
+            return buildingOnPlanet.Any(b => b.Type == "starport");
+        }
+
+        public bool CheckIfThereIsAFakeMoveOfUnit( Unit unitBody)
+        {
+            return ((unitBody.DestinationSystem == unitBody.System && unitBody.DestinationPlanet != unitBody.Planet) ||
+                 (unitBody.DestinationSystem != unitBody.System && unitBody.DestinationPlanet == unitBody.Planet));
+        }
+
         private static int GetHealthByType(string type)
         {
             switch (type)
@@ -37,6 +51,8 @@ namespace Duncan.Utils
                     return 80;
                 case "cruiser":
                     return 400;
+                case "cargo":
+                    return 100;
                 default:
                     return 0;
             }

@@ -3,9 +3,13 @@ using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Duncan.Controllers
 {
@@ -17,8 +21,11 @@ namespace Duncan.Controllers
         private readonly SystemsRepo _systemsRepo;
         private readonly PlanetRepo _planetRepo;
         private readonly UnitsService _unitsService;
+        private readonly BuildingsService _buildingsService;
+        private Dictionary<string, Wormholes> _wormholes;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
+        public UnitsController(IHttpClientFactory httpClientFactory, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo, IOptions<Dictionary<string, Wormholes>> wormholes, BuildingsService buildingsService)
         {
             _map = mapGenerator;
             _unitsRepo = unitsRepo;
@@ -26,6 +33,9 @@ namespace Duncan.Controllers
             _systemsRepo = systemsRepo;
             _planetRepo = planetRepo;
             _unitsService = unitsService;
+            _wormholes = wormholes.Value;
+            _httpClientFactory = httpClientFactory;
+            _buildingsService = buildingsService;
         }
 
         [SwaggerOperation(Summary = "Get unit of a specific user")]
@@ -42,11 +52,15 @@ namespace Duncan.Controllers
             return units;
         }
 
-        [SwaggerOperation(Summary = "Move Unit By Id")]
+        private static AuthenticationHeaderValue CreateShardAuthorizationHeader(string shardName, string sharedKey)
+                   => new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"shard-{shardName}:{sharedKey}")));
+
+        [SwaggerOperation(Summary = "Move Unit By Id" )]
         [HttpPut("users/{userId}/units/{unitId}")]
         public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+
             if (user == null)
                 return NotFound("Not Found userWithUnits");
 
@@ -56,13 +70,15 @@ namespace Duncan.Controllers
 
             bool isFakeRemoteUser = User.IsInRole("shard");
 
+            var building = user?.Buildings?.FirstOrDefault(b => b.BuilderId == unitBody.Id);
+
             if(unitFound != null) {
                 unitFound.Task = _unitsService.WaitingUnit(unitFound, unitBody);
             }
 
             if (unitFound == null && !isAdmin && !isFakeRemoteUser && unitBody.Type == "cargo") 
             {
-                user.Units.Add(unitBody);
+                user?.Units?.Add(unitBody);
                 return unitBody; 
             }
 
@@ -71,7 +87,7 @@ namespace Duncan.Controllers
 
             else if (isAdmin)
             {
-                user.Units.Add(unitBody);
+                user?.Units?.Add(unitBody);
                 unitBody.DestinationPlanet = unitBody.Planet;
                 unitBody.DestinationSystem = unitBody.System;
                 unitBody.Health = unitBody.Type switch
@@ -79,14 +95,14 @@ namespace Duncan.Controllers
                     "bomber" => 50,
                     "fighter" => 80,
                     "cruiser" => 400,
-                    _ => unitBody.Health // Default case, keep the existing health if the unit type is not recognized
+                    _ => unitBody.Health
                 };
                 return unitBody;
             }
             else if (isFakeRemoteUser)
             {
                 unitBody.System = "80ad7191-ef3c-14f0-7be8-e875dad4cfa6";
-                user.Units.Add(unitBody);
+                user?.Units?.Add(unitBody);
                 return unitBody;
             }
 
@@ -94,46 +110,37 @@ namespace Duncan.Controllers
             {
                 if (unitFound.Type == "cargo")
                 {
-                    var buildingOnPlanet = user.Buildings?.Where(b => b.Planet == unitFound.Planet);
-                    var isStarportOnPlanet = buildingOnPlanet.Any(b => b.Type == "starport");
-                    if (isStarportOnPlanet is false) 
-                        return BadRequest("First One");
+                    if (!_unitsRepo.CheckIfThereIsStarportOnPlanet(user, unitFound))
+                        return BadRequest("There is no starport on the planet");
 
-                    foreach (var resource in unitBody.ResourcesQuantity.Keys.ToList())
-                    {
-                        int bodyQuantity = unitBody.ResourcesQuantity[resource];
-                        int cargoQuantity = unitFound.ResourcesQuantity[resource];
-                        int diff = bodyQuantity - cargoQuantity;
-
-                        if (diff > 0)
-                        {
-                            unitFound.ResourcesQuantity[resource] +=  diff;
-                            user.ResourcesQuantity[resource] -= diff;
-                        }
-                        else if (diff < 0)
-                        {
-                            user.ResourcesQuantity[resource] -= diff;
-                            unitFound.ResourcesQuantity[resource] += diff;
-                        }
-                    }
+                    _unitsService.LoadAndUnloadResources(user, unitFound, unitBody);
                 }
-                else return BadRequest("Second one");
+                else return BadRequest("Unit type is not equal to cargo");
             }
 
-            if (user.ResourcesQuantity.Any(kv => kv.Value < 0 ))
+            if (_usersRepo.CheckIfUserHaveNotEnoughResources(user))
             {
-                return BadRequest("Third one");
+                return BadRequest("User has not enough resources");
             }
 
-
-            var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unitBody.Id);
-
-            if (building != null &&
-                ((unitBody.DestinationSystem == unitBody.System && unitBody.DestinationPlanet != unitBody.Planet) ||
-                 (unitBody.DestinationSystem != unitBody.System && unitBody.DestinationPlanet == unitBody.Planet)))
+            if (building != null && _unitsRepo.CheckIfThereIsAFakeMoveOfUnit(unitBody))
             {
-                building.CancellationSource.Cancel();
-                user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unitBody.Id));
+                _buildingsService.CancelBuildingTask(user, building, unitBody);
+            }
+
+            if (unitBody.DestinationShard != null)
+            {
+                var warmhole = _wormholes[unitBody.DestinationShard];
+                var client = _httpClientFactory.CreateClient();
+                client.BaseAddress = new Uri(warmhole.BaseUri.ToString());
+                client.DefaultRequestHeaders.Authorization = CreateShardAuthorizationHeader(warmhole.User, warmhole.SharedPassword);
+
+                var response = await client.PutAsJsonAsync($"users/{userId}", user);
+                response = await client.PutAsJsonAsync($"users/{userId}/units/{unitId}", unitFound);
+
+                user?.Units?.Remove(unitFound);
+             
+                return new RedirectResult(warmhole.BaseUri.ToString() + $"users/{userId}/units/{unitId}", true, true);
             }
 
             return unitFound;
@@ -144,10 +151,12 @@ namespace Duncan.Controllers
         public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+
             if (user == null)
                 return NotFound("Not Found userWithUnits");
 
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
+
             if (unitFound == null)
                 return NotFound("Not Found unitFound");
 

@@ -115,16 +115,10 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            User? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
+            User? user = _usersRepo.GetUserWithUnitsByUserId(id);
 
-            if (userUnit == null)
-                return NotFound();
-
-            User user = new User();
-            user.Id = userUnit.Id;
-            user.Pseudo = userUnit.Pseudo;
-            user.ResourcesQuantity = userUnit.ResourcesQuantity;
-            user.DateOfCreation = userUnit.DateOfCreation;
+            if (user == null)
+                return NotFound("User not found");
 
             return user;
         }
