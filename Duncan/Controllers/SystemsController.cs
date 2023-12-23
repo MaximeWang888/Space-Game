@@ -24,7 +24,7 @@ namespace Duncan.Controllers
             _planetRepo = planetRepo;
         }
 
-        [SwaggerOperation(Summary = "Get all systems")]
+        [SwaggerOperation(Summary = "Fetches all systems, and their planet")]
         [HttpGet("")]
         public IList<CustomSystem> GetAllSystems()
         {
@@ -35,7 +35,7 @@ namespace Duncan.Controllers
             return CustomSystems;
         }
 
-        [SwaggerOperation(Summary = "Get a specific system by its name")]
+        [SwaggerOperation(Summary = "Fetches a single system, and all its planets")]
         [HttpGet("{systemName}")]
         public CustomSystem GetSystem(string systemName)
         {
@@ -44,7 +44,7 @@ namespace Duncan.Controllers
             return _systemsRepo.GetSystemByName(systemName, systems);
         }
 
-        [SwaggerOperation(Summary = "Get all planets of a specific system")]
+        [SwaggerOperation(Summary = "Fetches all planets of a single system")]
         [HttpGet("{systemName}/planets")]
         public IList<Planet> GetAllPlanetsOfSystem(string systemName)
         {
@@ -53,7 +53,7 @@ namespace Duncan.Controllers
             return systemSelected.Planets;
         }
 
-        [SwaggerOperation(Summary = "Get a specific planet of a system")]
+        [SwaggerOperation(Summary = "Fetches a single planet of a system")]
         [HttpGet("{systemName}/planets/{planetName}")]
         public Planet? GetPlanet(string systemName, string planetName)
         {
