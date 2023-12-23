@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using Duncan.Model;
+﻿using Duncan.Model;
 using Duncan.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Shard.Shared.Core;
 
 namespace Duncan.Services

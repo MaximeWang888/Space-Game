@@ -14,18 +14,16 @@ namespace Duncan.Utils
             return user.Units?.FirstOrDefault(u => u.Type == type);
         }
 
-        public Unit? CreateUnitWithType(string type, string system, string planet)
+        public Unit CreateUnitWithType(string type, string system, string planet)
         {
-            Unit unit = new Unit
-            {
-                Planet = planet,
-                System = system,
-                DestinationPlanet = planet,
-                DestinationSystem = system,
-                Type = type,
-                Health = GetHealthByType(type)
-            };
-            return unit;
+            return new Unit{
+                               Planet = planet,
+                               System = system,
+                               DestinationPlanet = planet,
+                               DestinationSystem = system,
+                               Type = type,
+                               Health = GetHealthByType(type)
+                           };
         }
 
         public bool CheckIfThereIsStarportOnPlanet(User user, Unit unitFound)
