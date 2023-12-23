@@ -78,7 +78,7 @@ namespace Duncan.Controllers
             if (user == null)
                 return NotFound("No user with such id=" + userId);
 
-            return Ok(user.Buildings);
+            return user.Buildings;
         }
 
         [SwaggerOperation(Summary = "Return information about one single building of a user.")]
@@ -107,12 +107,12 @@ namespace Duncan.Controllers
                 }
             }
 
-            return Ok(building);
+            return building;
         }
 
         [SwaggerOperation(Summary = "Add a unit to the build queue of the starport. Currently immediatly returns the unit.")]
         [HttpPost("/users/{userId}/Buildings/{starportId}/queue")]
-        public ActionResult<AnyType> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] QueueBody? queueRequest)
+        public ActionResult<Unit> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] QueueBody? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -136,7 +136,7 @@ namespace Duncan.Controllers
             if (!hasEnoughResources)
                 return BadRequest("Not enough resources");
 
-            return Ok(unitFound);
+            return unitFound;
         }
 
         private bool IsBuildingUnderConstruction(Building building)

@@ -44,7 +44,7 @@ namespace Duncan.Controllers
             {
                 existingUser.ResourcesQuantity = user.ResourcesQuantity;
 
-                return Ok(existingUser); 
+                return existingUser; 
             }
 
             var systems = _map.Map.Systems;
