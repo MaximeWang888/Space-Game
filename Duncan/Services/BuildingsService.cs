@@ -19,11 +19,6 @@ namespace Duncan.Services
             _planetRepo = planetRepo;
             _clock = clock;
         }
-        public bool ValidateResourceCategory(string resourceCategory)
-        {
-            IList<string> resourceKinds = new List<string> { "solid", "liquid", "gaseous" };
-            return resourceKinds.Contains(resourceCategory);
-        }
 
         public void RunTasksOnBuilding(Building building, User user)
         {
@@ -116,7 +111,7 @@ namespace Duncan.Services
             return true;
         }
 
-        public async Task ProcessBuild(Building building)
+        private async Task ProcessBuild(Building building)
         {
             building.CancellationSource = new CancellationTokenSource();
             await _clock.Delay(300_000, building.CancellationSource.Token); //5 minutes
@@ -129,7 +124,7 @@ namespace Duncan.Services
             user?.Buildings?.Remove(user?.Buildings?.FirstOrDefault(b => b.BuilderId == unitBody.Id));
         }
 
-        public async Task ProcessExtract(Building building, User user, string resourceCategory)
+        private async Task ProcessExtract(Building building, User user, string resourceCategory)
         {
             SystemSpecification? system = _systemsRepo.GetSystemByName(building.System, _map.Map.Systems);
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(building.Planet, system);
@@ -180,6 +175,7 @@ namespace Duncan.Services
                 await ProcessDifferentSolidResources(user, planetResources, solidResources, maxKey, minKey);
             }
         }
+
         private async Task ProcessEqualSolidResources(User user, Dictionary<string, int> planetResources, string maxKey, int value, int? copy)
         {
             while (user?.ResourcesQuantity?[maxKey] < value + copy)
@@ -221,6 +217,7 @@ namespace Duncan.Services
                 await _clock.Delay(60000);
             }
         }
+
         private async Task ProcessGaseousResources(User user, Dictionary<string, int> planetResources)
         {
             while (planetResources["oxygen"] > 0)
@@ -229,6 +226,12 @@ namespace Duncan.Services
                 planetResources["oxygen"] -= 1;
                 await _clock.Delay(60000);
             }
+        }
+
+        private bool ValidateResourceCategory(string resourceCategory)
+        {
+            IList<string> resourceKinds = new List<string> { "solid", "liquid", "gaseous" };
+            return resourceKinds.Contains(resourceCategory);
         }
 
         private bool IsInvalidUnitCase([FromRoute] string unitType, Building building, User user)
