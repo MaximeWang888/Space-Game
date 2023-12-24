@@ -1,5 +1,4 @@
 ﻿using Duncan.Model;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Duncan.Utils
 {
