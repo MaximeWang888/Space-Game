@@ -18,6 +18,7 @@ builder.Services.AddSingleton<PlanetsRepo>();
 builder.Services.AddSingleton<SystemsRepo>();
 builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();
+builder.Services.AddSingleton<UsersService>();
 builder.Services.AddSingleton<BuildingsService>();
 builder.Services.AddHostedService<TimedHostedService>();
 builder.Services.AddAuthentication()

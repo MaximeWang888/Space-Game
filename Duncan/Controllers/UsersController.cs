@@ -1,5 +1,6 @@
 using Duncan.Model;
 using Duncan.Repositories;
+using Duncan.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -11,100 +12,32 @@ namespace Duncan.Controllers
     {
 
         private readonly UserDB? _userDB;
-        private readonly MapGeneratorWrapper _map;
         private readonly UsersRepo _usersRepo;
+        private readonly UsersService _usersService;
 
-        public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
+        public UsersController(UserDB userDB, UsersRepo usersRepo, UsersService usersService)
         {
             _userDB = userDB;
-            _map = mapGenerator;
             _usersRepo = usersRepo;
+            _usersService = usersService;
         }
 
         [SwaggerOperation(Summary = "Create a new user")]
         [HttpPut("{id}")]
         public ActionResult<User> CreateNewUser([FromRoute] string id, [FromBody] User user)
         {
-            if (user == null)
-                return BadRequest("Request body is required");
+            bool isAdmin = User.IsInRole("admin");
+            bool isFakeRemoteUser = User.IsInRole("shard");
 
-            if (user.Id?.Length < 2)
-                return BadRequest("Invalid user ID");
-
-            if (user.Id != id)
-                return BadRequest("Inconsistent user ID");
+            if (!_usersService.ValidateUserRequest(id, user, out var validationError))
+                return BadRequest(validationError);
 
             var existingUser = _userDB?.users.FirstOrDefault(u => u.Id == id);
 
-            bool isAdmin = User.IsInRole("admin");
+            if (_usersService.UpdateExistingUser(existingUser, user, isAdmin))
+                return existingUser;
 
-            bool isFakeRemoteUser = User.IsInRole("shard");
-
-            if (existingUser != null && isAdmin)
-            {
-                existingUser.ResourcesQuantity = user.ResourcesQuantity;
-
-                return existingUser; 
-            }
-
-            var systems = _map.Map.Systems;
-            var random = new Random();
-            var shuffledSystems = systems.OrderBy(x => random.Next()).ToList();
-            var randomPlanetName = shuffledSystems.First().Planets.First().Name;
-
-            Unit unit_1 = new Unit
-            {
-                Planet = randomPlanetName,
-                System = _map.Map.Systems.First().Name,
-                DestinationSystem = _map.Map.Systems.First().Name,
-                Type = "scout",
-                Health = 50
-            };
-
-            Unit unit_2 = new Unit
-            {
-                Planet = randomPlanetName,
-                System = _map.Map.Systems.First().Name,
-                DestinationSystem = _map.Map.Systems.First().Name,
-                Type = "builder",
-                Health = 50
-            };
-
-            var ResourcesQuantity = new Dictionary<string, int>
-               {
-                {"titanium", 0},
-                {"gold", 0},
-                {"aluminium", 0},
-                {"iron", 10},
-                {"carbon", 20},
-                {"oxygen", 50},
-                {"water", 50}
-            };
-
-
-            if (isAdmin)
-            {
-                foreach (var (key, value) in user.ResourcesQuantity)
-                {
-                    ResourcesQuantity[key] = value;
-                }
-            }
-
-            user.Id = user.Id;
-            user.Pseudo = user.Pseudo;
-
-            if (isFakeRemoteUser)
-            {
-                user.DateOfCreation = user.DateOfCreation;
-                user.ResourcesQuantity = ResourcesQuantity.ToDictionary(kv => kv.Key, kv => 0);
-            }
-            else
-            {
-                user.DateOfCreation = new DateTime();
-                user.ResourcesQuantity = ResourcesQuantity;
-                user.Units?.Add(unit_1);
-                user.Units?.Add(unit_2);
-            }
+            _usersService.InitializeUser(user, isAdmin, isFakeRemoteUser);
 
             _userDB?.users.Add(user);
 
