@@ -17,6 +17,8 @@ builder.Services.AddSingleton<PlanetRepo>();
 builder.Services.AddSingleton<SystemsRepo>();
 builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();
+builder.Services.AddSingleton<BuildingsService>();
+
 
 
 builder.Services.AddControllers();

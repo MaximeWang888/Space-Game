@@ -1,10 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="expectedTestSector.json" />
+    <None Remove="expectedTestSectorWithResources.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="expectedTestSector.json" />
+    <EmbeddedResource Include="expectedTestSectorWithResources.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="3.1.2">

@@ -8,7 +8,7 @@ namespace Duncan
 
         public MapGeneratorWrapper()
         {
-            MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "MohaMax" };
+            MapGeneratorOptions mapOptions = new MapGeneratorOptions() { Seed = "Test application" };
             Map = new MapGenerator(mapOptions).Generate();
         }
     }

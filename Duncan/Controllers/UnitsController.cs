@@ -58,6 +58,14 @@ namespace Duncan.Controllers
             unitFound.DestinationSystem = unit.DestinationSystem;
             unitFound.task = _unitsService.WaitingUnit(unit, unitFound);
 
+            var building = userWithUnits.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
+
+            if (building != null && unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet || unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)
+            {
+                building.CancellationSource.Cancel();
+                userWithUnits.Buildings.Remove(userWithUnits.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
+            }
+
             return unitFound;
         }
 
