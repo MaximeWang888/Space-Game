@@ -16,7 +16,6 @@ namespace Duncan.Services
                     planets.Add(new Planet(planet.Name, planet.Size));
                 }
             }
-
         }
     }
 }

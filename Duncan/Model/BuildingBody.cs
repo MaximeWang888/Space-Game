@@ -1,5 +1,4 @@
-﻿
-namespace Duncan.Model
+﻿namespace Duncan.Model
 {
     public class BuildingBody
     {
@@ -7,10 +6,9 @@ namespace Duncan.Model
         public string? Type { get; set; }
         public string? BuilderId { get; set; }
         public string? ResourceCategory { get; set; }
-
         public BuildingBody()
         {
-            this.Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString();
         }
     }
 }

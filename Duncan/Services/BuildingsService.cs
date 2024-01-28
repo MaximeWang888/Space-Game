@@ -12,19 +12,19 @@ namespace Duncan.Services
         private readonly PlanetRepo _planetRepo;
         public BuildingsService(MapGeneratorWrapper mapGenerator, IClock clock, SystemsRepo systemsRepo, PlanetRepo planetRepo)
         {
-            this._map = mapGenerator; 
-            this._systemsRepo = systemsRepo;
-            this._planetRepo = planetRepo;
-            this._clock = clock;
+            _map = mapGenerator; 
+            _systemsRepo = systemsRepo;
+            _planetRepo = planetRepo;
+            _clock = clock;
         }
         public async Task ProcessBuild(Building building)
         {
             building.CancellationSource = new CancellationTokenSource();
-            await _clock.Delay(300000, building.CancellationSource.Token); //5 minutes
+            await _clock.Delay(300_000, building.CancellationSource.Token); //5 minutes
             building.IsBuilt = true;
             building.EstimatedBuildTime = null;
         }
-        public async Task ProcessExtract(Building building, UserWithUnits user, string resourceCategory)
+        public async Task ProcessExtract(Building building, User user, string resourceCategory)
         {
             SystemSpecification? system = _systemsRepo.GetSystemByName(building.System, _map.Map.Systems);
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(building.Planet, system);
@@ -52,7 +52,7 @@ namespace Duncan.Services
                 }
             }
         }
-        private async Task ProcessSolidResources(Building building, UserWithUnits user, Dictionary<string, int> planetResources)
+        private async Task ProcessSolidResources(Building building, User user, Dictionary<string, int> planetResources)
         {
             var solidResources = planetResources
                 .Where(kv => !kv.Key.Equals("water", StringComparison.OrdinalIgnoreCase) &&
@@ -74,7 +74,7 @@ namespace Duncan.Services
                 await ProcessDifferentSolidResources(user, planetResources, solidResources, maxKey, minKey);
             }
         }
-        private async Task ProcessEqualSolidResources(UserWithUnits user, Dictionary<string, int> planetResources, string maxKey, int value, int? copy)
+        private async Task ProcessEqualSolidResources(User user, Dictionary<string, int> planetResources, string maxKey, int value, int? copy)
         {
             while (user?.ResourcesQuantity?[maxKey] < value + copy)
             {
@@ -84,7 +84,7 @@ namespace Duncan.Services
             }
         }
 
-        private async Task ProcessDifferentSolidResources(UserWithUnits user, Dictionary<string, int> planetResources, Dictionary<string, int> solidResources, string maxKey, string minKey)
+        private async Task ProcessDifferentSolidResources(User user, Dictionary<string, int> planetResources, Dictionary<string, int> solidResources, string maxKey, string minKey)
         {
             while (planetResources[maxKey] > planetResources[minKey])
             {
@@ -106,7 +106,7 @@ namespace Duncan.Services
             }
         }
 
-        private async Task ProcessLiquidResources(UserWithUnits user, Dictionary<string, int> planetResources)
+        private async Task ProcessLiquidResources(User user, Dictionary<string, int> planetResources)
         {
             while (planetResources["water"] > 0)
             {
@@ -115,7 +115,7 @@ namespace Duncan.Services
                 await _clock.Delay(60000);
             }
         }
-        private async Task ProcessGaseousResources(UserWithUnits user, Dictionary<string, int> planetResources)
+        private async Task ProcessGaseousResources(User user, Dictionary<string, int> planetResources)
         {
             while (planetResources["oxygen"] > 0)
             {
@@ -130,7 +130,7 @@ namespace Duncan.Services
             {
                 Id = building.Id,
                 BuilderId = building.BuilderId,
-                Type = "mine",
+                Type = building.Type,
                 System = unitFound.System,
                 Planet = unitFound.Planet,
                 IsBuilt = false,
@@ -145,10 +145,10 @@ namespace Duncan.Services
             return resourceKinds.Contains(resourceCategory);
         }
 
-        public void RunTasksOnBuilding(Building building, UserWithUnits userWithUnits)
+        public void RunTasksOnBuilding(Building building, User user)
         {
             building.Task = ProcessBuild(building);
-            building.TaskTwo = ProcessExtract(building, userWithUnits, building.ResourceCategory);
+            building.TaskTwo = ProcessExtract(building, user, building.ResourceCategory);
         }
     }
 }

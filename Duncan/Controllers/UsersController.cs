@@ -1,3 +1,4 @@
+using Duncan.Helper;
 using Duncan.Model;
 using Duncan.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +17,9 @@ namespace Duncan.Controllers
 
         public UsersController(UserDB userDB, MapGeneratorWrapper mapGenerator, UsersRepo usersRepo)
         {
-            this._userDB = userDB;
-            this._map = mapGenerator;
-            this._usersRepo = usersRepo;
+            _userDB = userDB;
+            _map = mapGenerator;
+            _usersRepo = usersRepo;
         }
 
         [SwaggerOperation(Summary = "Put a specific user")]
@@ -34,12 +35,22 @@ namespace Duncan.Controllers
             if (user.Id != id)
                 return BadRequest("Inconsistent user ID");
 
+            var existingUser = _userDB?.users.FirstOrDefault(u => u.Id == id);
+
+            if (existingUser != null && HelperAuth.isAdmin(Request))
+            {
+                existingUser.ResourcesQuantity = user.ResourcesQuantity;
+
+                return Ok(existingUser); 
+            }
+
             Unit unit_1 = new Unit
             {
                 Planet = _map.Map.Systems.First().Planets.First().Name,
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
-                Type = "scout"
+                Type = "scout",
+                Health = 50
             };
 
             Unit unit_2 = new Unit
@@ -48,6 +59,7 @@ namespace Duncan.Controllers
                 System = _map.Map.Systems.First().Name,
                 DestinationSystem = _map.Map.Systems.First().Name,
                 Type = "builder",
+                Health = 50
             };
 
             var ResourcesQuantity = new Dictionary<string, int>
@@ -61,15 +73,22 @@ namespace Duncan.Controllers
                 {"water", 50}
             };
 
-            UserWithUnits userWithUnits = new UserWithUnits();
-            userWithUnits.Id = user.Id;
-            userWithUnits.Pseudo = user.Pseudo;
+            if (HelperAuth.isAdmin(Request))
+            {
+                foreach (var (key, value) in user.ResourcesQuantity)
+                {
+                    ResourcesQuantity[key] = value;
+                }
+            } 
 
-            userWithUnits.ResourcesQuantity = ResourcesQuantity;
-            userWithUnits.Units?.Add(unit_1);
-            userWithUnits.Units?.Add(unit_2);
+            user.Id = user.Id;
+            user.Pseudo = user.Pseudo;
+            user.DateOfCreation = new DateTime();
+            user.ResourcesQuantity = ResourcesQuantity;
+            user.Units?.Add(unit_1);
+            user.Units?.Add(unit_2);
 
-            _userDB?.users.Add(userWithUnits);
+            _userDB?.users.Add(user);
 
             return user;
         }
@@ -78,7 +97,7 @@ namespace Duncan.Controllers
         [HttpGet("{id}")]
         public ActionResult<User> GetUserById(string id)
         {
-            UserWithUnits? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
+            User? userUnit = _usersRepo.GetUserWithUnitsByUserId(id);
 
             if (userUnit == null)
                 return NotFound();
@@ -87,6 +106,7 @@ namespace Duncan.Controllers
             user.Id = userUnit.Id;
             user.Pseudo = userUnit.Pseudo;
             user.ResourcesQuantity = userUnit.ResourcesQuantity;
+            user.DateOfCreation = userUnit.DateOfCreation;
 
             return user;
         }

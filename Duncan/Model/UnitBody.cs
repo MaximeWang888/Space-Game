@@ -8,10 +8,9 @@
         public string? System { get; set; }
         public string? DestinationSytem { get; set; }
         public string? DestinationPlanet { get; set; }
-
         public UnitBody()
         {
-            this.Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString();
         }
     }
 }
