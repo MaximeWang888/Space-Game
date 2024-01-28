@@ -17,7 +17,7 @@ namespace Duncan.Controllers
         private readonly BuildingsService _buildingsService;
         private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock, BuildingsService buildingsService)
         {
             _unitsRepo = unitsRepo;
             _usersRepo = usersRepo;
@@ -29,39 +29,22 @@ namespace Duncan.Controllers
         [HttpPost("/users/{userId}/Buildings")]
         public ActionResult<Building> CreateBuildingAtLocation([FromRoute] string userId, [FromBody] BuildingBody building)
         {
-
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null)
                 return NotFound("No user with such id=" + userId);
 
-            Unit? unitFound = _unitsRepo.GetUnitWithType("builder", user);
+            Unit? builderUnit = _unitsRepo.GetUnitWithType("builder", user);
 
-            if (unitFound == null)
-                return NotFound("Not Found unit");
+            if (builderUnit == null)
+                return NotFound("Builder unit not found");
 
-            if (building == null)
-                return BadRequest("Building is missing");
+            ActionResult<Building> validationError = _buildingsService.ValidateBuilding(building, builderUnit);
+            if (validationError != null)
+                return validationError;
 
-            if (building.BuilderId == null)
-                return BadRequest("Builder id is missing");
-
-            if(building.Type != "mine" && building.Type != "starport")
-                return BadRequest();
-
-            if (unitFound.Id != building.BuilderId)
-                return BadRequest("BuilderId is different than the unitfoundId");
-
-            if (unitFound.DestinationPlanet != unitFound.Planet)
-                return BadRequest("Unit is not over the planet");
-
-            if (building.Type == "mine" && !_buildingsService.ValidateResourceCategory(building.ResourceCategory))
-                return BadRequest("Builder specify a type other than mine");
-
-            var buildingCreated = _buildingsService.CreateBuilding(building, unitFound);
-
+            var buildingCreated = _buildingsService.CreateBuilding(building, builderUnit);
             _buildingsService.RunTasksOnBuilding(buildingCreated, user);
-
             user?.Buildings?.Add(buildingCreated);
 
             return Created("", buildingCreated);
@@ -94,7 +77,7 @@ namespace Duncan.Controllers
             if (building == null)
                 return NotFound("No building with such id=" + buildingId);
 
-            if (building.EstimatedBuildTime.HasValue && IsBuildingUnderConstruction(building))
+            if (building.EstimatedBuildTime.HasValue && _buildingsService.IsBuildingUnderConstruction(building))
             {
                 try
                 {
@@ -130,70 +113,12 @@ namespace Duncan.Controllers
 
             user.Units.Add(unitFound);
 
-            bool hasEnoughResources = DeductResources(user, building, queueRequest.Type);
+            bool hasEnoughResources = _buildingsService.DeductResources(user, building, queueRequest.Type);
 
             if (!hasEnoughResources)
                 return BadRequest("Not enough resources");
 
             return unitFound;
-        }
-
-        private bool IsBuildingUnderConstruction(Building building)
-        {
-            var timeOfArrival = (building.EstimatedBuildTime.Value - _clock.Now).TotalSeconds;
-
-            if (timeOfArrival <= 2)
-            {
-                return true;
-            }
-            else
-            {
-                building.IsBuilt = false;
-                return false;
-            }
-        }
-        private bool DeductResources(User user, Building building, string unitType)
-        {
-            if (IsInvalidUnitCase(unitType, building, user))
-            {
-                return false;
-            }
-
-            switch (unitType)
-            {
-                case "scout":
-                    user.ResourcesQuantity["iron"] -= 5;
-                    user.ResourcesQuantity["carbon"] -= 5;
-                    break;
-
-                case "builder":
-                    user.ResourcesQuantity["iron"] -= 10;
-                    user.ResourcesQuantity["carbon"] -= 5;
-                    break;
-
-                case "cargo":
-                    user.ResourcesQuantity["iron"] -= 10;
-                    user.ResourcesQuantity["carbon"] -= 10;
-                    user.ResourcesQuantity["gold"] -= 5;
-                    break;
-
-                default:
-                    return true; 
-            }
-
-            return true;
-        }
-
-        private bool IsInvalidUnitCase([FromRoute] string unitType, Building building, User user)
-        {
-            return unitType switch
-            {
-                "scout" when (building.Type == "mine" || building.IsBuilt == false) => true,
-                "scout" when (user.ResourcesQuantity?["iron"] < 5 || user.ResourcesQuantity?["carbon"] < 5) => true,
-                "builder" when (user.ResourcesQuantity?["iron"] < 10 || user.ResourcesQuantity?["carbon"] < 5) => true,
-                "cargo" when (user.ResourcesQuantity?["iron"] < 10 || user.ResourcesQuantity?["carbon"] < 10 || user.ResourcesQuantity?["gold"] < 5) => true,
-                _ => false
-            };
         }
     }
 }
