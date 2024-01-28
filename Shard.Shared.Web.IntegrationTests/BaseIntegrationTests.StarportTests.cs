@@ -1,3 +1,5 @@
+using Shard.Shared.Web.IntegrationTests.Asserts;
+using Shard.Shared.Web.IntegrationTests.TestEntities;
 using System.Net;
 
 namespace Shard.Shared.Web.IntegrationTests;
@@ -247,5 +249,241 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         await response.AssertStatusEquals(HttpStatusCode.BadRequest);
         await AssertResourceQuantity(client, originalBuilding.UserPath, "carbon", 0);
         await AssertResourceQuantity(client, originalBuilding.UserPath, "iron", 10);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task QueuingCargoOnBuiltStarportCosts10Carbon10Iron5Gold()
+    {
+        using var client = factory.CreateClient();
+
+        var originalBuilding = await BuildAndWaitStarportAsync(client);
+        await ChangeUserResources(originalBuilding.UserPath, resoucesQuantity =>
+        {
+            resoucesQuantity.Carbon = 10;
+            resoucesQuantity.Iron = 10;
+            resoucesQuantity.Gold = 5;
+        });
+
+        var response = await client.PostAsJsonAsync(originalBuilding.QueueUrl, new
+        {
+            type = "cargo"
+        });
+        await response.AssertSuccessStatusCode();
+        await AssertResourceQuantity(client, originalBuilding.UserPath, "carbon", 0);
+        await AssertResourceQuantity(client, originalBuilding.UserPath, "iron", 0);
+        await AssertResourceQuantity(client, originalBuilding.UserPath, "gold", 0);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CanLoadResourcesInCargo()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        Assert.NotNull(originalUnit.ResourcesQuantity);
+        Assert.Equal(15, originalUnit.ResourcesQuantity.Water);
+        Assert.Equal(27, originalUnit.ResourcesQuantity.Oxygen);
+
+        var unit = await RefreshUnit(client, originalUnit);
+
+        Assert.NotNull(unit.ResourcesQuantity);
+        Assert.Equal(15, unit.ResourcesQuantity.Water);
+        Assert.Equal(27, unit.ResourcesQuantity.Oxygen);
+    }
+
+    private async Task<Unit> CreateTransportAndLoadScenario(HttpClient client,
+        string unitType = "cargo", int waterLoaded = 15, bool shouldFail = false)
+    {
+        var originalBuilding = await BuildAndWaitStarportAsync(client);
+        await ChangeUserResources(originalBuilding.UserPath, resoucesQuantity =>
+        {
+            resoucesQuantity.Carbon = 10;
+            resoucesQuantity.Iron = 10;
+            resoucesQuantity.Gold = 5;
+            resoucesQuantity.Water = 25;
+            resoucesQuantity.Oxygen = 30;
+            resoucesQuantity.Aluminium = 11;
+        });
+
+        var queuingResponse = await client.PostAsJsonAsync(originalBuilding.QueueUrl, new
+        {
+            type = unitType
+        });
+        await queuingResponse.AssertSuccessStatusCode();
+        var unit = new Unit(originalBuilding.UserPath, await queuingResponse.AssertSuccessJsonAsync());
+
+        unit.SetResourcesQuantity(resoucesQuantity =>
+        {
+            resoucesQuantity.Water = waterLoaded;
+            resoucesQuantity.Oxygen = 27;
+        });
+
+        if (!shouldFail)
+        {
+            return await client.PutAsync(unit);
+        }
+        else
+        {
+            var loadingResponse = await client.PutTestEntityAsync(unit.Url, unit);
+            await loadingResponse.AssertStatusEquals(HttpStatusCode.BadRequest);
+            return unit;
+        }
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task LoadingResourcesIntoCargoRemovesSaidResources()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        await AssertResourceQuantity(client, originalUnit.UserPath, "water", 10);
+        await AssertResourceQuantity(client, originalUnit.UserPath, "oxygen", 3);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CannotLoadResourcesInBuilder()
+    {
+        using var client = factory.CreateClient();
+        await CreateTransportAndLoadScenario(client,
+            unitType: "builder", shouldFail: true);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CanUnloadSomeResourcesFromCargo()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        originalUnit.SetResourcesQuantity(resoucesQuantity =>
+        {
+            resoucesQuantity.Water = 10;
+            resoucesQuantity.Oxygen = 17;
+        });
+        var unit = await client.PutAsync(originalUnit);
+
+        Assert.NotNull(unit.ResourcesQuantity);
+        Assert.Equal(10, unit.ResourcesQuantity.Water);
+        Assert.Equal(17, unit.ResourcesQuantity.Oxygen);
+
+        await AssertResourceQuantity(client, originalUnit.UserPath, "water", 15);
+        await AssertResourceQuantity(client, originalUnit.UserPath, "oxygen", 13);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CanLoadAndUnloadSomeResourcesFromCargoAtTheSameTime()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        originalUnit.SetResourcesQuantity(resoucesQuantity =>
+        {
+            resoucesQuantity.Water = 5;
+            resoucesQuantity.Oxygen = 20;
+            resoucesQuantity.Aluminium = 9;
+        });
+        var unit = await client.PutAsync(originalUnit);
+
+        Assert.NotNull(unit.ResourcesQuantity);
+        Assert.Equal(5, unit.ResourcesQuantity.Water);
+        Assert.Equal(20, unit.ResourcesQuantity.Oxygen);
+        Assert.Equal(9, unit.ResourcesQuantity.Aluminium);
+
+        await AssertResourceQuantity(client, originalUnit.UserPath, "water", 20);
+        await AssertResourceQuantity(client, originalUnit.UserPath, "oxygen", 10);
+        await AssertResourceQuantity(client, originalUnit.UserPath, "aluminium", 2);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CannotLoadMoreResourcesThanUserHas()
+    {
+        using var client = factory.CreateClient();
+        await CreateTransportAndLoadScenario(client,
+            waterLoaded: 26, shouldFail: true);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CannotLoadResourcesIfNoStarport()
+    {
+        await CannotLoadOrUnloadResourcesIfNoStarport(resoucesQuantity =>
+        {
+            resoucesQuantity.Water = 16;
+            resoucesQuantity.Oxygen = 27;
+        });
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CannotUnLoadResourcesIfNoStarport()
+    {
+        await CannotLoadOrUnloadResourcesIfNoStarport(resoucesQuantity =>
+        {
+            resoucesQuantity.Water = 12;
+            resoucesQuantity.Oxygen = 27;
+        });
+    }
+
+    private async Task CannotLoadOrUnloadResourcesIfNoStarport(Action<ResourcesQuantity> resourceMutator)
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        originalUnit.DestinationPlanet = null;
+        var unitAfterMove = await client.PutAsync(originalUnit);
+
+        unitAfterMove.SetResourcesQuantity(resourceMutator);
+        var loadingResponse = await client.PutTestEntityAsync(unitAfterMove.Url, unitAfterMove);
+
+        await loadingResponse.AssertStatusEquals(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CanMoveUnitWithoutUnloadingResources()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        originalUnit.DestinationPlanet = null;
+        var unit = await client.PutAsync(originalUnit);
+
+        Assert.NotNull(unit.ResourcesQuantity);
+        Assert.Equal(15, unit.ResourcesQuantity.Water);
+        Assert.Equal(27, unit.ResourcesQuantity.Oxygen);
+    }
+
+    [Fact]
+    [Trait("grading", "true")]
+    [Trait("version", "6")]
+    public async Task CanPutCargoWithoutChangingResourcesWithoutStarport()
+    {
+        using var client = factory.CreateClient();
+        var originalUnit = await CreateTransportAndLoadScenario(client);
+
+        originalUnit.DestinationPlanet = null;
+        var unitAfterMove = await client.PutAsync(originalUnit);
+
+        var unit = await client.PutAsync(unitAfterMove);
+
+        Assert.NotNull(unit.ResourcesQuantity);
+        Assert.Equal(15, unit.ResourcesQuantity.Water);
+        Assert.Equal(27, unit.ResourcesQuantity.Oxygen);
     }
 }

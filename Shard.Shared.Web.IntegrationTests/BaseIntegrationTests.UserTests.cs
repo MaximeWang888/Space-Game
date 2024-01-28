@@ -244,4 +244,7 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
 
     private static AuthenticationHeaderValue CreateAdminAuthorizationHeader()
         => new ("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes("admin:password")));
+
+    private static AuthenticationHeaderValue CreateShardAuthorizationHeader(string shardName, string sharedKey) 
+        => new ("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"shard-{shardName}:{sharedKey}")));
 }

@@ -1,10 +1,8 @@
-using System.Text;
 using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Any;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -20,149 +18,108 @@ namespace Duncan.Controllers
         private readonly MapGeneratorWrapper _map;
         private readonly IClock _clock;
 
-        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock,BuildingsService buildingsService, MapGeneratorWrapper map)
+        public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock, BuildingsService buildingsService)
         {
             _unitsRepo = unitsRepo;
             _usersRepo = usersRepo;
             _clock = clock;
             _buildingsService = buildingsService;
-            _map = map;
         }
 
-        [SwaggerOperation(Summary = "Create a building at a location")]
-        [HttpPost("/users/{userId}/buildings")]
-        public ActionResult<Building> BuildMine(string userId, [FromBody] BuildingBody building)
+        [SwaggerOperation(Summary = "Creates a building at a location.")]
+        [HttpPost("/users/{userId}/Buildings")]
+        public ActionResult<Building> CreateBuildingAtLocation([FromRoute] string userId, [FromBody] BuildingBody building)
         {
-
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null)
-                return NotFound();
+                return NotFound("No user with such id=" + userId);
 
-            Unit? unitFound = _unitsRepo.GetUnitWithType("builder", user);
+            Unit? builderUnit = _unitsRepo.GetUnitWithType("builder", user);
 
-            if (unitFound == null)
-                return NotFound("Not Found unit");
+            if (builderUnit == null)
+                return NotFound("Builder unit not found");
 
-            if (building == null)
-                return BadRequest("Building is null");
+            ActionResult<Building> validationError = _buildingsService.ValidateBuilding(building, builderUnit);
+            if (validationError != null)
+                return validationError;
 
-            if (building.BuilderId == null)
-                return BadRequest("Builder'id is null");
-
-            if(building.Type != "mine" && building.Type != "starport")
-                return BadRequest();
-
-            if (unitFound.Id != building.BuilderId)
-                return BadRequest("BuilderId is different than the unitfoundId");
-
-            if (unitFound.DestinationPlanet != unitFound.Planet)
-                return BadRequest("Builder is not over a planet");
-
-            if (building.Type == "mine" && !_buildingsService.ValidateResourceCategory(building.ResourceCategory))
-                return BadRequest();
-
-            var buildingCreated = _buildingsService.CreateBuilding(building, unitFound);
-
+            var buildingCreated = _buildingsService.CreateBuilding(building, builderUnit);
             _buildingsService.RunTasksOnBuilding(buildingCreated, user);
-
             user?.Buildings?.Add(buildingCreated);
 
             return Created("", buildingCreated);
         }
 
-        [SwaggerOperation(Summary = "Create a building at a location")]
-        [HttpGet("/users/{userId}/buildings")]
-
-        public ActionResult<List<Building>> GetBuildings(string userId)
+        [SwaggerOperation(Summary = "Return all buildings of a user.")]
+        [HttpGet("/users/{userId}/Buildings")]
+        public ActionResult<List<Building>> GetAllBuildingsForUser([FromRoute] string userId)
         {
 
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null)
-                return NotFound();
+                return NotFound("No user with such id=" + userId);
 
-            return Ok(user.Buildings);
+            return user.Buildings;
         }
-        [SwaggerOperation(Summary = "Create a building at a location")]
-        [HttpGet("/users/{userId}/buildings/{buildingId}")]
-        public async Task<ActionResult<Building>> GetSingleBuilding(string userId, string buildingId)
+
+        [SwaggerOperation(Summary = "Return information about one single building of a user.")]
+        [HttpGet("/users/{userId}/Buildings/{buildingId}")]
+        public async Task<ActionResult<Building>> GetInformationAboutBuilding([FromRoute] string userId, [FromRoute] string buildingId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null)
-                return NotFound();
+                return NotFound("No user with such id=" + userId);
 
             var building = user?.Buildings?.FirstOrDefault(b => b.Id == buildingId);
 
             if (building == null)
-                return NotFound();
+                return NotFound("No building with such id=" + buildingId);
 
-            if (building.EstimatedBuildTime.HasValue)
+            if (building.EstimatedBuildTime.HasValue && _buildingsService.IsBuildingUnderConstruction(building))
             {
-                var timeOfArrival = ((building.EstimatedBuildTime.Value - _clock.Now).TotalSeconds);
-
-                if (timeOfArrival <= 2)
+                try
                 {
-                    try
-                    {
-                        await building.Task;
-                    }
-                    catch
-                    {
-                        return NotFound();
-                    }
+                    await building.Task;
                 }
-                else
+                catch
                 {
-                    building.IsBuilt = false;
+                    return NotFound();
                 }
             }
 
-            return Ok(building);
+            return building;
         }
-        [HttpPost("/users/{userId}/buildings/{starportId}/queue")]
-        public async Task<ActionResult<AnyType>> Queuing(string userId, string starportId, [FromBody] QueueBody? queueRequest)
+
+        [SwaggerOperation(Summary = "Add a unit to the build queue of the starport. Currently immediatly returns the unit.")]
+        [HttpPost("/users/{userId}/Buildings/{starportId}/queue")]
+        public ActionResult<Unit> AddUnitToBuildQueueAtStarport([FromRoute] string userId, [FromRoute] string starportId, [FromBody] UnitBlueprint? queueRequest)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
             if (user == null)
-                return NotFound();
+                return NotFound("No user with such id=" + userId);
 
             var building = user?.Buildings?.FirstOrDefault(b => b.Id == starportId);
 
             if (building == null)
                 return NotFound();
 
-            var system = _map.Map.Systems.First().Name;
-            var planet = _map.Map.Systems.First().Planets.First().Name;
+            var system = building.System;
+            var planet = building.Planet;
 
             var unitFound = _unitsRepo.CreateUnitWithType(queueRequest.Type, system, planet);
 
-            switch (queueRequest.Type)
-            {
-                case "scout":
+            user.Units.Add(unitFound);
 
-                    if (user?.ResourcesQuantity?["iron"] < 5 || user?.ResourcesQuantity?["carbon"] < 5)
-                        return BadRequest("Not enough resources");
+            bool hasEnoughResources = _buildingsService.DeductResources(user, building, queueRequest.Type);
 
-                    if (building.Type == "mine") return BadRequest();
+            if (!hasEnoughResources)
+                return BadRequest("Not enough resources");
 
-                    if (building.IsBuilt == false) return BadRequest();
-
-                    user.ResourcesQuantity["iron"] -= 5;
-                    user.ResourcesQuantity["carbon"] -= 5;
-
-                    return Ok(unitFound);
-
-                case "builder":
-                    user.ResourcesQuantity["iron"] -= 10;
-                    user.ResourcesQuantity["carbon"] -= 5;
-
-                    return Ok(unitFound);
-            }
-
-            return Ok(building);
+            return unitFound;
         }
     }
 }

@@ -3,9 +3,9 @@ using Shard.Shared.Core;
 
 namespace Duncan.Repositories
 {
-    public class PlanetRepo
+    public class PlanetsRepo
     {
-        public Planet? GetPlanetByName(string planetName, IList<Planet> planetsSelected)
+        public Planet? FindPlanetByName(string planetName, IList<Planet> planetsSelected)
         {
             return planetsSelected.FirstOrDefault(planet => planet.Name == planetName);
         }

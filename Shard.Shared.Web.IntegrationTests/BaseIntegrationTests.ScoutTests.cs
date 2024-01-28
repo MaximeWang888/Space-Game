@@ -94,12 +94,11 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         var unit = await GetScout(userPath);
         
         var destinationPlanet = await GetSomePlanetInSystem(unit.System);
+        
+        using var client = CreateClient();
 
         unit.DestinationPlanet = destinationPlanet;
-
-        using var client = CreateClient();
-        using var moveResponse = await client.PutTestEntityAsync(unit.Url, unit);
-        await moveResponse.AssertSuccessStatusCode();
+        await client.PutAsync(unit);
 
         await fakeClock.Advance(new TimeSpan(0, 0, 15));
 

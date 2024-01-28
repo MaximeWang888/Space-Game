@@ -105,9 +105,7 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         unit.DestinationPlanet = null;
 
         using var client = CreateClient();
-        using var response = await client.PutTestEntityAsync(unit.Url, unit);
-
-        var unitAfterMove = new Unit(unit.UserPath, await response.AssertSuccessJsonAsync());
+        var unitAfterMove = await client.PutAsync(unit);
         Assert.NotNull(unitAfterMove);
         Assert.Equal(unit.Id, unitAfterMove.Id);
         Assert.Equal(destinationSystem, unitAfterMove.DestinationSystem);
@@ -139,9 +137,7 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
         unit.DestinationSystem = unit.System;
         unit.DestinationPlanet = destinationPlanet;
 
-        using var response = await client.PutTestEntityAsync(unit.Url, unit);
-
-        var unitAfterMove = new Unit(unit.UserPath, await response.AssertSuccessJsonAsync());
+        var unitAfterMove = await client.PutAsync(unit);
         Assert.Equal(unit.Id, unitAfterMove.Id);
         Assert.Equal(unit.System, unitAfterMove.DestinationSystem);
         Assert.Equal(destinationPlanet, unitAfterMove.DestinationPlanet);
@@ -181,9 +177,7 @@ public partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory>
 
         unit.DestinationSystem = destinationSystem;
         unit.DestinationPlanet = destinationPlanet;
-
-        using var moveResponse = await client.PutTestEntityAsync(unit.Url, unit);
-        await moveResponse.AssertSuccessStatusCode();
+        await client.PutAsync(unit);
 
         await fakeClock.Advance(new TimeSpan(0, 1, 15));
 

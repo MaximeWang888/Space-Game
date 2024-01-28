@@ -8,27 +8,38 @@ using Shard.Shared.Core;
 using Shard.Shared.Web.IntegrationTests.Clock;
 using Xunit.Abstractions;
 using Microsoft.AspNetCore.Mvc.Testing.Handlers;
+using Microsoft.Extensions.Http;
 
 namespace Shard.Shared.Web.IntegrationTests; 
 
 public abstract partial class BaseIntegrationTests<TEntryPoint, TWebApplicationFactory> 
-    : IClassFixture<TWebApplicationFactory> 
+    : IClassFixture<TWebApplicationFactory>, IHttpMessageHandlerBuilderFilter
     where TEntryPoint : class 
     where TWebApplicationFactory: WebApplicationFactory<TEntryPoint> 
 { 
     private readonly WebApplicationFactory<TEntryPoint> factory; 
-    private readonly ITestOutputHelper testOutputHelper;
 	private readonly FakeClock fakeClock = new();
+    private readonly FakeHttpHandler httpHandler = new();
 
     public BaseIntegrationTests(TWebApplicationFactory factory, ITestOutputHelper testOutputHelper) 
     {
-        this.testOutputHelper = testOutputHelper;
         this.factory = factory 
             .WithWebHostBuilder(builder => 
             { 
                 builder.ConfigureAppConfiguration(RemoveAllReloadOnChange); 
                 builder.ConfigureLogging( 
-                    logging => logging.AddProvider(new XunitLoggerProvider(testOutputHelper))); 
+                    logging => logging.AddProvider(new XunitLoggerProvider(testOutputHelper)));
+
+                builder.ConfigureAppConfiguration(config =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string>()
+                        {
+                            { "Wormholes:fake-remote:baseUri", "http://10.0.0.42" },
+                            { "Wormholes:fake-remote:system", "80ad7191-ef3c-14f0-7be8-e875dad4cfa6" },
+                            { "Wormholes:fake-remote:user", "server1" },
+                            { "Wormholes:fake-remote:sharedPassword", "caramba" },
+                        });
+                });
 
                 builder.ConfigureTestServices(services =>
                 {
@@ -38,6 +49,7 @@ public abstract partial class BaseIntegrationTests<TEntryPoint, TWebApplicationF
                     {
                         options.Seed = "Test application";
                     });
+                    services.AddSingleton<IHttpMessageHandlerBuilderFilter>(this);
                 });
             }); 
     } 
@@ -45,7 +57,16 @@ public abstract partial class BaseIntegrationTests<TEntryPoint, TWebApplicationF
     private void RemoveAllReloadOnChange(WebHostBuilderContext context, IConfigurationBuilder configuration) 
     { 
         foreach (var source in configuration.Sources.OfType<FileConfigurationSource>()) 
-            source.ReloadOnChange = false; 
+            source.ReloadOnChange = false;
+    }
+
+    public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next)
+    {
+        return builder =>
+        {
+            builder.AdditionalHandlers.Add(httpHandler);
+            next(builder);
+        };
     }
 
     private HttpClient CreateClient()

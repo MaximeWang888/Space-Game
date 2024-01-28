@@ -13,17 +13,29 @@ namespace Duncan.Utils
             return user.Units?.FirstOrDefault(u => u.Type == type);
         }
 
-        public Unit? CreateUnitWithType(string type, string system, string planet)
+        public Unit CreateUnitWithType(string type, string system, string planet)
         {
-            Unit unit = new Unit
-            {
-                Planet = planet,
-                System = system,
-                DestinationSystem = system,
-                Type = type,
-                Health = GetHealthByType(type)
-            };
-            return unit;
+            return new Unit{
+                               Planet = planet,
+                               System = system,
+                               DestinationPlanet = planet,
+                               DestinationSystem = system,
+                               Type = type,
+                               Health = GetHealthByType(type)
+                           };
+        }
+
+        public bool CheckIfThereIsStarportOnPlanet(User user, Unit unitFound)
+        {
+            var buildingOnPlanet = user.Buildings?.Where(b => b.Planet == unitFound.Planet);
+           
+            return buildingOnPlanet.Any(b => b.Type == "starport");
+        }
+
+        public bool CheckIfThereIsAFakeMoveOfUnit( Unit unitBody)
+        {
+            return ((unitBody.DestinationSystem == unitBody.System && unitBody.DestinationPlanet != unitBody.Planet) ||
+                 (unitBody.DestinationSystem != unitBody.System && unitBody.DestinationPlanet == unitBody.Planet));
         }
 
         private static int GetHealthByType(string type)
@@ -36,6 +48,8 @@ namespace Duncan.Utils
                     return 80;
                 case "cruiser":
                     return 400;
+                case "cargo":
+                    return 100;
                 default:
                     return 0;
             }

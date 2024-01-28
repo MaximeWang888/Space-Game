@@ -1,5 +1,4 @@
-﻿using Duncan.Helper;
-using Duncan.Model;
+﻿using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
@@ -16,10 +15,10 @@ namespace Duncan.Controllers
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
         private readonly SystemsRepo _systemsRepo;
-        private readonly PlanetRepo _planetRepo;
+        private readonly PlanetsRepo _planetRepo;
         private readonly UnitsService _unitsService;
 
-        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetRepo planetRepo)
+        public UnitsController(MapGeneratorWrapper mapGenerator, UsersRepo usersRepo, UnitsRepo unitsRepo, UnitsService unitsService, SystemsRepo systemsRepo, PlanetsRepo planetRepo)
         {
             _map = mapGenerator;
             _unitsRepo = unitsRepo;
@@ -29,9 +28,9 @@ namespace Duncan.Controllers
             _unitsService = unitsService;
         }
 
-        [SwaggerOperation(Summary = "Get unit of a specific user")]
+        [SwaggerOperation(Summary = "Return all units of a user.")]
         [HttpGet("users/{userId}/Units")]
-        public ActionResult<List<Unit>> GetAllUnit(string userId)
+        public ActionResult<List<Unit>> GetAllUnits([FromRoute] string userId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
 
@@ -41,63 +40,20 @@ namespace Duncan.Controllers
             List<Unit> units = user.Units ?? new List<Unit>();
 
             return units;
+            
         }
 
-        [SwaggerOperation(Summary = "Move Unit By Id")]
-        [HttpPut("users/{userId}/units/{unitId}")]
-        public async Task<ActionResult<Unit?>> MoveUnitByIdAsync(string userId, string unitId, [FromBody] Unit unit)
-        {
-            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
-            if (user == null)
-                return NotFound("Not Found userWithUnits");
-
-            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
-
-            bool isAdmin = HelperAuth.isAdmin(Request);
-
-            if (unitFound == null && !isAdmin)
-                return Unauthorized("Unauthorized");
-            else if (isAdmin)
-            {
-                user.Units.Add(unit);
-                unit.DestinationPlanet = unit.Planet;
-                unit.DestinationSystem = unit.System;
-                unit.Health = unit.Type switch
-                {
-                    "bomber" => 50,
-                    "fighter" => 80,
-                    "cruiser" => 400,
-                    _ => unit.Health // Default case, keep the existing health if the unit type is not recognized
-                };
-                return unit;
-            }
-
-            unitFound.DestinationPlanet = unit.DestinationPlanet;
-            unitFound.DestinationSystem = unit.DestinationSystem;
-            unitFound.Task = _unitsService.WaitingUnit(unit, unitFound);
-
-            var building = user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id);
-
-            if (building != null &&
-                ((unit.DestinationSystem == unit.System && unit.DestinationPlanet != unit.Planet) ||
-                 (unit.DestinationSystem != unit.System && unit.DestinationPlanet == unit.Planet)))
-            {
-                building.CancellationSource.Cancel();
-                user.Buildings.Remove(user.Buildings.FirstOrDefault(b => b.BuilderId == unit.Id));
-            }
-
-            return unitFound;
-        }
-
-        [SwaggerOperation(Summary = "Return information about one single unit of a user")]
+        [SwaggerOperation(Summary = "Return information about one single unit of a user.")]
         [HttpGet("users/{userId}/Units/{unitId}")]
-        public async Task<ActionResult<Unit>> GetUnitInformation(string userId, string unitId)
+        public async Task<ActionResult<Unit>> GetUnitInformation([FromRoute] string userId, [FromRoute] string unitId)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+
             if (user == null)
                 return NotFound("Not Found userWithUnits");
 
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
+
             if (unitFound == null)
                 return NotFound("Not Found unitFound");
 
@@ -106,17 +62,41 @@ namespace Duncan.Controllers
             return unitFound;
         }
 
-        [SwaggerOperation(Summary = "Get unit location by user ID and unit ID")]
-        [HttpGet("users/{userId}/Units/{unitId}/location")]
-        public ActionResult<UnitLocation> GetUnitLocation(string userId, string unitId)
+        [SwaggerOperation(Summary = "Change the status of a unit of a user. Right now, only its position (system and planet) can be changed - which is akin to moving it. " +
+            "If the unit does not exist and the authenticated user is administrator, creates the unit")]
+        [HttpPut("users/{userId}/Units/{unitId}")]
+        public async Task<ActionResult<Unit?>> ChangeStatusOfUnit([FromRoute] string userId, [FromRoute] string unitId, [FromBody] Unit unitBody)
         {
             User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+
             if (user == null)
                 return NotFound("Not Found userWithUnits");
 
             Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
+
+            bool isAdmin = User.IsInRole("admin");
+            bool isFakeRemoteUser = User.IsInRole("shard");
+
+            await _unitsService.HandleExistingUnit(unitFound, unitBody);
+
             if (unitFound == null)
-                return NotFound("Not Found unitFound");
+                return _unitsService.HandleNonExistingUnit(user, isAdmin, isFakeRemoteUser, unitBody);
+
+            return await _unitsService.ProcessUnitChange(user, isAdmin, isFakeRemoteUser, unitBody, unitFound);
+        }
+
+
+        [SwaggerOperation(Summary = "Returned more detailled information about the location a unit of user currently is about.")]
+        [HttpGet("users/{userId}/Units/{unitId}/location")]
+        public ActionResult<UnitLocation> GetUnitLocation([FromRoute] string userId, [FromRoute] string unitId)
+        {
+            User? user = _usersRepo.GetUserWithUnitsByUserId(userId);
+            if (user == null)
+                return NotFound("User not found");
+
+            Unit? unitFound = _unitsRepo.GetUnitByUnitId(unitId, user);
+            if (unitFound == null)
+                return NotFound("Unit not found");
 
             UnitLocation unitInformation = new UnitLocation();
             unitInformation.System = unitFound.System;
@@ -124,16 +104,17 @@ namespace Duncan.Controllers
 
             SystemSpecification? system = _systemsRepo.GetSystemByName(unitFound.System, _map.Map.Systems);
             if (system == null)
-                return NotFound("Not Found system");
+                return NotFound("System not found");
 
             PlanetSpecification? planet = _planetRepo.GetPlanetByName(unitFound.Planet, system);
             if (planet == null)
-                return NotFound("Not Found planet");
+                return NotFound("Planet not found");
 
             if (unitFound.Type == "scout")
                 unitInformation.ResourcesQuantity = planet.ResourceQuantity.ToDictionary(r => r.Key.ToString().ToLower(), r => r.Value);
 
             return unitInformation;
         }
+
     }
 }

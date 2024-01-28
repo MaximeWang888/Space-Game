@@ -24,6 +24,10 @@ namespace Duncan.Repositories
             return _userDB?.users.FirstOrDefault(user => user.Units.Any(unit => unit.Id == unitId));
         }
 
+        internal bool CheckIfUserHaveNotEnoughResources(User user) 
+        { 
+            return user.ResourcesQuantity.Any(kv => kv.Value < 0);
+        }
     }
 }
 

@@ -36,7 +36,31 @@ public record Unit(string UserPath, JObjectAsserter Json)
         get => Json["destinationPlanet"].AssertString();
         set => Json.SetPropertyValue("destinationPlanet", value);
     }
+    public string? DestinationShard
+    {
+        get => Json["destinationShard"].AssertString();
+        set => Json.SetPropertyValue("destinationShard", value);
+    }
     public int Health => Json["health"].AssertInteger();
+
+    public ResourcesQuantity? ResourcesQuantity 
+    {
+        get
+        {
+            var json = Json.GetPropertyOrNull("resourcesQuantity");
+            return json != null ? new(json) : null;
+        }
+    }
+
+    public ResourcesQuantity GetOrCreateResourcesQuantity()
+    {
+        if (ResourcesQuantity == null)
+            Json.SetPropertyAsNewObject("resourcesQuantity");
+        return new(Json["resourcesQuantity"]);
+    }
+
+    public void SetResourcesQuantity(Action<ResourcesQuantity> resourceMutator)
+        => resourceMutator(GetOrCreateResourcesQuantity());
 
     public override string ToString() => Json.ToString();
 }

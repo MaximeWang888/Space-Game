@@ -1,4 +1,5 @@
 using Duncan;
+using Duncan.Authentification;
 using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
@@ -13,12 +14,21 @@ builder.Services.AddSingleton<IClock>(new SystemClock());
 builder.Services.AddSingleton<UserDB>();
 builder.Services.AddSingleton<UnitsRepo>();
 builder.Services.AddSingleton<UsersRepo>();
-builder.Services.AddSingleton<PlanetRepo>();
+builder.Services.AddSingleton<PlanetsRepo>();
 builder.Services.AddSingleton<SystemsRepo>();
 builder.Services.AddSingleton<SystemsService>();
 builder.Services.AddSingleton<UnitsService>();
+builder.Services.AddSingleton<UsersService>();
 builder.Services.AddSingleton<BuildingsService>();
 builder.Services.AddHostedService<TimedHostedService>();
+builder.Services.AddAuthentication()
+    .AddScheme<AuthOptions, AuthHandler>(
+        "SessionTokens",
+        opts => { }
+    );
+builder.Services.Configure<Dictionary<string, Wormholes>>(builder.Configuration.GetSection("Wormholes"));
+builder.Services.AddHttpClient();
+
 
 
 builder.Services.AddControllers();
