@@ -9,7 +9,6 @@ namespace Duncan.Model
 
         [SwaggerSchema("Size of the planet")]
         public int Size { get; }
-
         public Planet(string Name, int Size)
         {
             this.Name = Name;

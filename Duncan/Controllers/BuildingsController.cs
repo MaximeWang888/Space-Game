@@ -15,6 +15,7 @@ namespace Duncan.Controllers
         private readonly UsersRepo _usersRepo;
         private readonly UnitsRepo _unitsRepo;
         private readonly BuildingsService _buildingsService;
+        private readonly MapGeneratorWrapper _map;
         private readonly IClock _clock;
 
         public BuildingsController(UnitsRepo unitsRepo, UsersRepo usersRepo, IClock clock, BuildingsService buildingsService)

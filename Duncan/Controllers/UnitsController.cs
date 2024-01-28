@@ -1,10 +1,12 @@
-﻿using Duncan.Model;
+﻿using Duncan.Helper;
+using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;
 using Duncan.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Shard.Shared.Core;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Runtime.InteropServices;
 
 namespace Duncan.Controllers
 {
