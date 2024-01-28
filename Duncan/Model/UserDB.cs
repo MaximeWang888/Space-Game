@@ -2,6 +2,6 @@
 {
     public class UserDB
     {
-        public List<User> users { get; set; } = new();
+        public List<User> users { get; } = new();
     }
 }

@@ -48,6 +48,7 @@ namespace Duncan.Controllers
             List<Unit> units = user.Units ?? new List<Unit>();
 
             return units;
+            
         }
 
         [SwaggerOperation(Summary = "Return information about one single unit of a user.")]
