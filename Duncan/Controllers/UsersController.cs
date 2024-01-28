@@ -1,4 +1,3 @@
-using Duncan.Helper;
 using Duncan.Model;
 using Duncan.Repositories;
 using Duncan.Services;

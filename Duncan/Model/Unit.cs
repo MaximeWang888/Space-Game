@@ -30,7 +30,6 @@ namespace Duncan.Model
 
         [SwaggerSchema("Date at which the unit is expected to arrive.")]
         public DateTime? EstimatedTimeOfArrival { get; set; }
-        public int? Health { get; set; }
 
         [SwaggerSchema("Amount of health points the unit has.")]
         public int? Health { get; set; }
